@@ -1,0 +1,1113 @@
+/* Dark Theme Customization */
+
+/* Main background and text colors */
+body {
+    background-color: #0d1117;
+    color: #adbac7;  /* 降低亮度，更柔和的正文颜色 */
+}
+
+.content {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+}
+
+/* Navigation bar */
+.navbar {
+    background-color: #161b22;
+    border-bottom: 1px solid #30363d;
+}
+
+/* Page headers */
+.page-header {
+    background: linear-gradient(135deg, #1f2937 0%, #0d1117 100%);
+    border-bottom: 1px solid #30363d;
+}
+
+/* Links */
+a {
+    color: #539bf5;  /* 降低饱和度的蓝色 */
+}
+
+a:hover {
+    color: #6cb6ff;
+    background: rgba(56, 139, 253, 0.1);  /* 降低背景透明度 */
+}
+
+a:focus {
+    color: #ffa657;
+    background: rgba(255, 166, 87, 0.15);
+}
+
+/* Sidebar */
+#sidebar {
+    background-color: #161b22;
+}
+
+.widget {
+    background-color: #0d1117;
+    border-bottom: 1px solid #21262d;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.widget h4 {
+    color: #539bf5;  /* 统一链接颜色 */
+}
+
+/* Tag box */
+.tag_box a {
+    background: #21262d;
+    color: #adbac7;  /* 统一正文颜色 */
+    border: 1px solid #30363d;
+}
+
+.tag_box a:hover {
+    background-color: #1f6feb;
+    color: #ffffff;
+    border-color: #1f6feb;
+}
+
+/* Article titles */
+h1, h2, h3, h4, h5, h6 {
+    color: #adbac7;  /* 与正文颜色统一 */
+}
+
+.page h3.title a {
+    color: #539bf5;  /* 与链接颜色统一 */
+}
+
+.page h3.title a:hover {
+    color: #6cb6ff;
+}
+
+/* Code blocks */
+pre,
+.highlight,
+code {
+    background: #0d1117 !important;
+    border: 1px solid #30363d !important;
+    color: #adbac7 !important;  /* 统一正文颜色 */
+}
+
+pre {
+    background: #0d1117 !important;
+    border: 1px solid #30363d !important;
+    padding: 16px !important;
+    overflow: auto !important;
+    border-radius: 6px !important;
+}
+
+.highlight {
+    background: #0d1117 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 6px !important;
+    margin: 1em 0 !important;
+}
+
+code {
+    background: #161b22 !important;
+    border: 1px solid #30363d !important;
+    padding: 2px 6px !important;
+    border-radius: 3px !important;
+    font-size: 90% !important;
+    color: #79c0ff !important;  /* 柔和的蓝色，突出显示行内代码 */
+}
+
+pre code {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    color: #adbac7 !important;  /* 统一代码颜色 */
+    font-size: 14px !important;
+    line-height: 1.7 !important;  /* 增加行距 */
+}
+
+/* Optimized code font stack */
+pre,
+pre code,
+code,
+.highlight,
+.highlight code {
+    font-family: 'JetBrains Mono', 'Source Code Pro', 'Fira Code', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Menlo, Consolas, 'Courier New', monospace !important;
+    font-variant-ligatures: none !important; /* Disable ligatures for better code readability */
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+figure.highlight {
+    background: #0d1117 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 6px !important;
+    margin: 1em 0 !important;
+}
+
+.highlight pre {
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.highlight table {
+    background: transparent !important;
+    border: none !important;
+}
+
+.highlight .gutter {
+    background: transparent !important;
+    border-right: 1px solid #30363d !important;
+    padding-right: 16px !important;  /* Add space between line numbers and border */
+    user-select: none; /* Prevent line numbers from being selected/copied */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.highlight .gutter pre {
+    color: #6e7681 !important;
+    background: transparent !important;
+    text-align: right !important;  /* Align line numbers to the right */
+    user-select: none; /* Prevent line numbers from being selected/copied */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.highlight .code {
+    padding-left: 16px !important;  /* Add space between border and code */
+}
+
+.highlight .code pre {
+    background: transparent !important;
+}
+
+/* Syntax highlighting colors - GitHub Dark theme inspired */
+.highlight .comment,
+.highlight .quote {
+    color: #768390 !important;  /* 降低注释亮度 */
+    font-style: italic !important;
+}
+
+.highlight .keyword,
+.highlight .selector-tag,
+.highlight .literal,
+.highlight .section,
+.highlight .link {
+    color: #f47067 !important;  /* 柔和的红色 */
+}
+
+.highlight .function,
+.highlight .title {
+    color: #b083f0 !important;  /* 降低紫色饱和度 */
+}
+
+.highlight .class .title {
+    color: #e0823d !important;  /* 柔和的橙色 */
+}
+
+.highlight .number,
+.highlight .symbol,
+.highlight .bullet {
+    color: #6cb6ff !important;  /* 柔和的蓝色 */
+}
+
+.highlight .string,
+.highlight .regexp {
+    color: #96d0ff !important;  /* 降低青色亮度 */
+}
+
+.highlight .attribute,
+.highlight .variable,
+.highlight .template-variable,
+.highlight .tag .attr {
+    color: #6cb6ff !important;  /* 统一为柔和蓝色 */
+}
+
+.highlight .tag,
+.highlight .name {
+    color: #72b887 !important;  /* 降低绿色饱和度 */
+}
+
+.highlight .type,
+.highlight .class,
+.highlight .built_in {
+    color: #e0823d !important;  /* 统一橙色 */
+}
+
+.highlight .params {
+    color: #e0823d !important;  /* 统一橙色 */
+}
+
+.highlight .meta {
+    color: #8b949e !important;  /* Gray for meta */
+}
+
+.highlight .meta-keyword {
+    color: #f47067 !important;  /* 统一为柔和红色 */
+}
+
+.highlight .operator {
+    color: #f47067 !important;  /* 统一为柔和红色 */
+}
+
+.highlight .deletion {
+    color: #ffa198 !important;
+    background-color: #490202 !important;
+}
+
+.highlight .addition {
+    color: #56d364 !important;
+    background-color: #0f5323 !important;
+}
+
+/* Language specific enhancements */
+.highlight .javascript .function,
+.highlight .js .function {
+    color: #b083f0 !important;  /* 统一紫色 */
+}
+
+.highlight .python .decorator,
+.highlight .python .meta {
+    color: #e0823d !important;  /* 统一橙色 */
+}
+
+.highlight .json .attr {
+    color: #6cb6ff !important;  /* 统一蓝色 */
+}
+
+.highlight .diff .header {
+    color: #79c0ff !important;
+    font-weight: bold !important;
+}
+
+/* Blockquotes */
+blockquote {
+    background-color: #161b22;
+    border-left: 5px solid #1f6feb;
+    color: #8b949e;
+}
+
+/* Archive list */
+.listing-item {
+    color: #adbac7;  /* 统一正文颜色 */
+}
+
+.listing-item .date_class {
+    color: #768390;  /* 柔和的灰色 */
+}
+
+.listing-item a {
+    color: #539bf5;  /* 统一链接颜色 */
+}
+
+.listing-item a:hover {
+    color: #6cb6ff;
+}
+
+/* Footer */
+footer {
+    background-color: #161b22;
+    border-top: 1px solid #30363d;
+    color: #8b949e;
+}
+
+/* Search */
+#local-search-input {
+    background-color: #0d1117;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+}
+
+#local-search-result {
+    background-color: #0d1117;
+    border: 1px solid #30363d;
+}
+
+/* Buttons */
+.btn {
+    background-color: #21262d;
+    border-color: #30363d;
+    color: #c9d1d9;
+    transition: all 0.2s ease;  /* 添加平滑过渡 */
+}
+
+.btn:hover {
+    background-color: #30363d;
+    border-color: #484f58;
+    transform: translateY(-1px);  /* 悬停时轻微上移 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);  /* 添加阴影 */
+}
+
+.btn:active,
+.btn:focus {
+    background-color: #1f6feb !important;  /* 点击时使用主题色 */
+    border-color: #1f6feb !important;
+    color: #ffffff !important;
+    transform: translateY(0);  /* 点击时恢复位置 */
+    box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.2) !important;  /* 添加发光效果 */
+    outline: none !important;  /* 移除默认轮廓 */
+}
+
+/* Primary button specific styles */
+.btn-primary {
+    background-color: #1f6feb;
+    border-color: #1f6feb;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background-color: #388bfd;
+    border-color: #388bfd;
+    color: #ffffff;
+}
+
+.btn-primary:active,
+.btn-primary:focus {
+    background-color: #1f6feb !important;
+    border-color: #1f6feb !important;
+    box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.3) !important;
+}
+
+/* Date display */
+.date {
+    color: #8b949e;
+}
+
+/* Recent post excerpt on homepage */
+.recent-post-excerpt {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-left: 4px solid #1f6feb;
+    padding: 6px 20px 20px 20px;  /* 顶部padding改为5px，让标题更贴近边框 */
+    margin-bottom: 30px;
+    margin-top: 15px;
+    border-radius: 6px;
+}
+
+.recent-post-excerpt h2 {
+     color: #539bf5;  /* 统一链接颜色 */
+    font-size: 1.8em;
+    margin-bottom: 10px;
+}
+
+.recent-post-excerpt .excerpt-meta {
+    color: #768390;  /* 柔和灰色 */
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+.recent-post-excerpt .excerpt-content {
+    color: #adbac7;  /* 统一正文颜色 */
+    line-height: 1.7;  /* 增加行距 */
+    max-height: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.recent-post-excerpt a {
+    color: #539bf5;  /* 统一链接颜色 */
+}
+
+/* Archive section on homepage */
+.homepage-archive {
+    margin-top: 40px;
+}
+
+.homepage-archive h2 {
+    color: #adbac7;  /* 统一标题颜色 */
+    border-bottom: 2px solid #30363d;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* Pagination */
+.pagination > li > a,
+.pagination > li > span {
+    background-color: #21262d;
+    border-color: #30363d;
+    color: #c9d1d9;
+}
+
+.pagination > li > a:hover,
+.pagination > li > span:hover {
+    background-color: #30363d;
+    border-color: #484f58;
+    color: #539bf5;  /* 统一链接颜色 */
+}
+
+.pagination > .active > a,
+.pagination > .active > span {
+    background-color: #1f6feb;
+    border-color: #1f6feb;
+}
+
+/* Slogan */
+.slogan {
+    color: #8b949e;
+}
+
+/* Table of contents */
+.toc {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 20px;  /* 距离顶部20px */
+    max-height: calc(100vh - 40px);  /* 最大高度为视口高度减去上下边距 */
+    overflow-y: auto;  /* 内容超出时显示滚动条 */
+    z-index: 100;
+}
+
+/* 自定义滚动条样式 */
+.toc::-webkit-scrollbar {
+    width: 6px;
+}
+
+.toc::-webkit-scrollbar-track {
+    background: #0d1117;
+    border-radius: 3px;
+}
+
+.toc::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 3px;
+}
+
+.toc::-webkit-scrollbar-thumb:hover {
+    background: #484f58;
+}
+
+.toc-title {
+    color: #539bf5;
+    font-size: 1.3em;  /* 增大标题字体 */
+    font-weight: 700;  /* 加粗标题 */
+    display: block;
+    margin-bottom: 15px;  /* 增加底部间距 */
+    padding-bottom: 10px;
+    border-bottom: 2px solid #30363d;
+}
+
+.toc-article {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.toc-article li {
+    margin: 4px 0;  /* 减小行间距从10px到4px */
+    padding-left: 0;
+}
+
+.toc-article a {
+    color: #adbac7;
+    text-decoration: none;
+    display: block;
+    padding: 6px 10px;  /* 减小内边距从8px 12px到6px 10px */
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 1em;
+    line-height: 1.4;  /* 减小行高从1.6到1.4 */
+}
+
+.toc-article a:hover {
+    color: #539bf5;
+    background: rgba(83, 155, 245, 0.1);
+    padding-left: 13px;  /* 减小悬停偏移从15px到13px */
+}
+
+.toc-article .toc-child {
+    padding-left: 18px;  /* 减小缩进从20px到18px */
+}
+
+.toc-article .toc-child .toc-child {
+    padding-left: 36px;  /* 减小缩进从40px到36px */
+}
+
+.toc-article .toc-child a {
+    font-size: 0.95em;
+    color: #8b949e;
+    padding: 5px 8px;  /* 减小子级内边距从6px 10px到5px 8px */
+}
+
+.toc-article .toc-child a:hover {
+    color: #6cb6ff;
+}
+
+/* HR separator */
+hr {
+    border-top: 2px solid #30363d;
+}
+
+/* Go to top button */
+#gotop {
+    background-color: #21262d;
+    border: 1px solid #30363d;
+}
+
+#gotop span:hover {
+    color: #58a6ff;
+}
+
+/* Article footer */
+.article-footer-copyright {
+    background-color: #161b22;
+    border-left: 3px solid #1f6feb;
+}
+
+/* Meta widget */
+.meta-widget a {
+    color: #768390;  /* 柔和灰色 */
+}
+
+.meta-widget a:hover {
+    color: #539bf5;  /* 统一链接颜色 */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .recent-post-excerpt {
+        max-height: 150px;
+    }
+
+    .site-logo {
+        height: 40px !important;
+        width: 40px !important;
+    }
+}
+
+/* Site logo styling */
+.logo {
+    background: none !important;
+}
+
+.logo > h1 {
+    padding-left: 0 !important;
+}
+
+/* Header link styling */
+.site-header-link {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    color: inherit;
+}
+
+.site-header-link:hover {
+    background: transparent !important;
+    text-decoration: none;
+}
+
+.site-header-link:focus {
+    background: transparent !important;
+    outline: none;
+}
+
+.site-header-link:active {
+    background: transparent !important;
+}
+
+.site-logo {
+    height: 60px;
+    width: 60px;
+    vertical-align: middle;
+    margin-right: 15px;
+    border-radius: 8px;
+    display: inline-block;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    pointer-events: none; /* Prevent image from being clickable separately */
+}
+
+.site-header-link:hover .site-logo {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(88, 166, 255, 0.3);
+}
+
+.site-header-link:focus .site-logo {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(88, 166, 255, 0.5);
+    outline: none;
+}
+
+.site-header-link:active .site-logo {
+    transform: scale(0.98);
+}
+
+/* Override link hover background for logo */
+a:has(.site-logo):hover {
+    background: transparent !important;
+}
+
+/* For browsers that don't support :has() */
+.page-header.logo h1 a:hover {
+    background: transparent !important;
+}
+
+.page-header.logo h1 a:focus {
+    background: transparent !important;
+    outline: none;
+}
+
+.page-header.logo h1 a:active {
+    background: transparent !important;
+}
+
+.page-header.logo h1 {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.site-title {
+    display: inline-block;
+    vertical-align: middle;
+    color: #fff;
+}
+
+.site-header-link:hover .site-title {
+    color: #539bf5;  /* 统一链接颜色 */
+}
+
+/* Article content reading optimizations */
+.content p,
+.content article {
+    line-height: 1.8 !important;  /* 增加正文行距 */
+    font-size: 16px !important;  /* 统一字号 */
+}
+
+/* Widget styling */
+.widget h4 {
+    color: #539bf5;  /* 统一链接颜色 */
+}
+
+/* Navbar styling */
+.navbar-brand {
+    color: #539bf5 !important;  /* 统一链接颜色 */
+}
+
+.navbar-nav > li > a {
+    color: #adbac7 !important;  /* 统一正文颜色 */
+}
+
+.navbar-nav > li > a:hover,
+.navbar-nav > li > a:focus {
+    color: #539bf5 !important;  /* 统一链接颜色 */
+    background-color: #1f6feb !important;
+}
+
+/* Article navigation buttons (Prev/Home/Next) */
+.pager li > a,
+.pager li > span {
+    background-color: #21262d;
+    border: 1px solid #30363d;
+    color: #539bf5;
+    transition: all 0.2s ease;
+}
+
+.pager li > a:hover {
+    background-color: #30363d;
+    border-color: #484f58;
+    color: #6cb6ff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.pager li > a:active,
+.pager li > a:focus {
+    background-color: #1f6feb !important;
+    border-color: #1f6feb !important;
+    color: #ffffff !important;
+    transform: translateY(0);
+    box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.2) !important;
+    outline: none !important;
+}
+
+/* Markdown text formatting - 优化行内元素显示 */
+/* Bold text - 加粗文本 */
+strong, b {
+    color: #e6edf3 !important;  /* 比正文更亮的白色，突出显示 */
+    font-weight: 600 !important;  /* 使用稍重的字重 */
+}
+
+/* Italic text - 斜体文本 */
+em, i {
+    color: #96d0ff !important;  /* 柔和的青色 */
+    font-style: italic !important;
+}
+
+/* Bold + Italic - 加粗斜体 */
+strong em,
+em strong,
+b i,
+i b {
+    color: #ffa657 !important;  /* 温暖的橙色，最高优先级 */
+    font-weight: 600 !important;
+    font-style: italic !important;
+}
+
+/* Sidebar sticky positioning - 侧边栏固定定位 */
+#side_meta {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 20px !important;
+    align-self: flex-start !important;
+}
+
+#post_meta {
+    max-height: calc(100vh - 40px) !important;  /* 限制最大高度 */
+    overflow-y: auto !important;  /* 内容过长时滚动 */
+}
+
+/* 确保父容器不阻止sticky */
+.post .row {
+    overflow: visible !important;
+}
+
+/* Meta widgets styling */
+.meta-widget {
+    margin-bottom: 20px;
+}
+
+.meta-widget:last-child {
+    margin-bottom: 0;
+}
+
+/* 侧边栏滚动条样式 */
+#post_meta::-webkit-scrollbar {
+    width: 6px;
+}
+
+#post_meta::-webkit-scrollbar-track {
+    background: #0d1117;
+    border-radius: 3px;
+}
+
+#post_meta::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 3px;
+}
+
+#post_meta::-webkit-scrollbar-thumb:hover {
+    background: #484f58;
+}
+
+/* ===== 文章内容优化 - 让博文眼前一亮 ===== */
+
+/* 文章主体容器 */
+.mypage {
+    line-height: 1.8 !important;  /* 增加行高，提升可读性 */
+    font-size: 16px !important;  /* 基础字号 */
+    letter-spacing: 0.3px !important;  /* 轻微字间距 */
+}
+
+/* 文章段落优化 */
+.mypage p {
+    margin-bottom: 1.5em !important;
+    text-align: justify !important;  /* 两端对齐 */
+    color: #adbac7 !important;
+}
+
+/* 文章标题优化 - 层次分明 */
+.mypage h2 {
+    color: #539bf5 !important;
+    font-size: 1.8em !important;
+    font-weight: 700 !important;
+    margin-top: 2.5em !important;
+    margin-bottom: 1em !important;
+    padding-bottom: 0.5em !important;
+    border-bottom: 3px solid #30363d !important;
+    position: relative !important;
+}
+
+.mypage h2::before {
+    content: "# " !important;
+    color: #539bf5 !important;
+    font-weight: 700 !important;
+    margin-right: 8px !important;
+}
+
+.mypage h3 {
+    color: #79c0ff !important;
+    font-size: 1.5em !important;
+    font-weight: 600 !important;
+    margin-top: 2em !important;
+    margin-bottom: 0.8em !important;
+    padding-left: 12px !important;
+    border-left: 4px solid #539bf5 !important;
+}
+
+.mypage h4 {
+    color: #96d0ff !important;
+    font-size: 1.3em !important;
+    font-weight: 600 !important;
+    margin-top: 1.5em !important;
+    margin-bottom: 0.6em !important;
+    padding-left: 8px !important;
+    border-left: 3px solid #30363d !important;
+}
+
+/* 代码块优化 - 更专业的外观 */
+.mypage .highlight {
+    margin: 1.5em 0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    overflow-x: auto !important;  /* 添加横向滚动条 */
+    overflow-y: visible !important;
+}
+
+/* 移除代码块顶部语言标签 */
+.mypage .highlight::before {
+    display: none !important;  /* 隐藏顶部标签 */
+}
+
+/* 代码块内容自动换行或滚动 */
+.mypage .highlight pre {
+    overflow-x: auto !important;  /* 横向滚动 */
+    white-space: pre !important;  /* 保持代码格式，不自动换行 */
+    word-wrap: normal !important;
+}
+
+/* 行内代码优化 */
+.mypage code {
+    font-weight: 500 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 列表优化 */
+.mypage ul,
+.mypage ol {
+    margin: 1.2em 0 !important;
+    padding-left: 2em !important;
+}
+
+.mypage li {
+    margin: 0.6em 0 !important;
+    line-height: 1.8 !important;
+}
+
+.mypage ul li::marker {
+    color: #539bf5 !important;
+    font-weight: bold !important;
+}
+
+.mypage ol li::marker {
+    color: #539bf5 !important;
+    font-weight: bold !important;
+}
+
+/* 引用块优化 */
+.mypage blockquote {
+    background: rgba(83, 155, 245, 0.05) !important;
+    border-left: 4px solid #539bf5 !important;
+    padding: 15px 20px !important;
+    margin: 1.5em 0 !important;
+    border-radius: 0 6px 6px 0 !important;
+    color: #96d0ff !important;
+    font-style: italic !important;
+}
+
+.mypage blockquote p {
+    margin-bottom: 0.5em !important;
+}
+
+/* 图片优化 */
+.mypage img {
+    border-radius: 8px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+    margin: 2em auto !important;
+    display: block !important;
+    max-width: 100% !important;
+    border: 1px solid #30363d !important;
+    outline: none !important;  /* 移除焦点轮廓 */
+    pointer-events: auto !important;  /* 确保正常点击 */
+    transform: none !important;  /* 禁用所有变换 */
+    transition: none !important;  /* 禁用所有过渡动画 */
+    animation: none !important;  /* 禁用所有动画 */
+}
+
+/* 移除图片悬停效果，避免蓝点和抖动 */
+.mypage img:hover {
+    outline: none !important;
+    transform: none !important;  /* 禁用悬停变换 */
+    transition: none !important;
+    animation: none !important;
+}
+
+/* 移除图片焦点时的轮廓 */
+.mypage img:focus {
+    outline: none !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+}
+
+/* 移除图片父元素链接的所有装饰 */
+.mypage a:has(img) {
+    border: none !important;
+    border-bottom: none !important;
+    outline: none !important;
+    text-decoration: none !important;
+    background: none !important;
+    transform: none !important;  /* 禁用链接变换 */
+    transition: none !important;
+    animation: none !important;
+}
+
+.mypage a:has(img):hover {
+    border: none !important;
+    border-bottom: none !important;
+    outline: none !important;
+    background: none !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+    padding: 0 !important;  /* 移除可能导致移动的padding */
+}
+
+.mypage a:has(img):focus {
+    border: none !important;
+    border-bottom: none !important;
+    outline: none !important;
+    background: none !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+}
+
+/* 移除图片周围的任何伪元素 */
+.mypage a:has(img)::before,
+.mypage a:has(img)::after {
+    display: none !important;
+}
+
+/* 表格优化 */
+.mypage table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    margin: 1.5em 0 !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.mypage table th {
+    background: #21262d !important;
+    color: #539bf5 !important;
+    font-weight: 600 !important;
+    padding: 12px 15px !important;
+    text-align: left !important;
+    border-bottom: 2px solid #30363d !important;
+}
+
+.mypage table td {
+    padding: 10px 15px !important;
+    border-bottom: 1px solid #30363d !important;
+    color: #adbac7 !important;
+}
+
+.mypage table tr:hover {
+    background: rgba(83, 155, 245, 0.05) !important;
+}
+
+.mypage table tr:last-child td {
+    border-bottom: none !important;
+}
+
+/* 水平分隔线优化 */
+.mypage hr {
+    border: none !important;
+    height: 2px !important;
+    background: linear-gradient(to right, transparent, #30363d, transparent) !important;
+    margin: 3em 0 !important;
+}
+
+/* 特殊强调文本块 */
+.mypage .alert {
+    padding: 15px 20px !important;
+    margin: 1.5em 0 !important;
+    border-radius: 6px !important;
+    border-left: 4px solid !important;
+}
+
+.mypage .alert-success {
+    background: rgba(46, 160, 67, 0.1) !important;
+    border-left-color: #2ea043 !important;
+    color: #7ee787 !important;
+}
+
+.mypage .alert-info {
+    background: rgba(83, 155, 245, 0.1) !important;
+    border-left-color: #539bf5 !important;
+    color: #79c0ff !important;
+}
+
+.mypage .alert-warning {
+    background: rgba(255, 166, 87, 0.1) !important;
+    border-left-color: #ffa657 !important;
+    color: #ffa657 !important;
+}
+
+/* 键盘按键样式 */
+.mypage kbd {
+    background: #21262d !important;
+    border: 1px solid #30363d !important;
+    border-radius: 4px !important;
+    padding: 2px 8px !important;
+    font-size: 0.9em !important;
+    color: #79c0ff !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+}
+
+/* 首字母下沉效果（可选） */
+.mypage > p:first-of-type::first-letter {
+    font-size: 3em !important;
+    font-weight: 700 !important;
+    color: #539bf5 !important;
+    float: left !important;
+    line-height: 0.8 !important;
+    margin: 0.1em 0.1em 0 0 !important;
+}
+
+/* 链接在文章中的样式优化 */
+.mypage a {
+    text-decoration: none !important;
+    border-bottom: 1px dotted #539bf5 !important;
+    transition: all 0.2s ease !important;
+}
+
+.mypage a:hover {
+    border-bottom-style: solid !important;
+    background: rgba(83, 155, 245, 0.1) !important;
+    padding: 2px 4px !important;
+    border-radius: 3px !important;
+}
+
+/* 代码行号优化 */
+.mypage .gutter {
+    background: #0d1117 !important;
+    border-right: 1px solid #30363d !important;
+}
+
+/* 滚动条优化 - 正文内代码块 */
+.mypage .highlight pre::-webkit-scrollbar {
+    height: 8px !important;
+}
+
+.mypage .highlight pre::-webkit-scrollbar-track {
+    background: #0d1117 !important;
+}
+
+.mypage .highlight pre::-webkit-scrollbar-thumb {
+    background: #30363d !important;
+    border-radius: 4px !important;
+}
+
+.mypage .highlight pre::-webkit-scrollbar-thumb:hover {
+    background: #484f58 !important;
+}
