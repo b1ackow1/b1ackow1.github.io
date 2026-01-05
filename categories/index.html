@@ -155,6 +155,21 @@
 	
 	
 	
+		<section id="comments" class="comments">
+			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script> 
+<div id="gitalk-container"></div>
+<script>
+var gitalkConfig = {"enable":true,"clientID":"Ov23liUDZN1bdqxLLX5N","clientSecret":"a01456e3e89791a65392d68828ab5b14c82548c3","repo":"b1ackow1.github.io","owner":"b1ackow1","admin":["","b1ackow1"],"id":"location.pathname","distractionFreeMode":true,"language":"zh-TW"}
+gitalkConfig.id=md5(location.pathname)
+var gitalk = new Gitalk(gitalkConfig)
+  
+  gitalk.render('gitalk-container')
+
+  </script>
+		</section>
+	
 	</div> <!-- col-md-9/col-md-12 -->
 
 
@@ -174,7 +189,7 @@
   
   &copy; 2026 BlackOwl's Blog
   
-      powered by <a href="http://hexo.io/" target="_blank">Hexo</a>.Theme <a href="https://github.com/Ares-X/hexo-theme-freemind.bithack" target="_blank">freemind.bithack</a>  
+      powered by <a href="http://hexo.io/" target="_blank">Hexo</a>.Theme <a href="https://github.com/Ares-X/hexo-theme-freemind.bithack" target="_blank">freemind.bithack.modify</a>  
 </p>
  </footer>
 </div> <!-- container-narrow -->
