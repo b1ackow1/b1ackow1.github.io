@@ -135,8 +135,10 @@
 	  <p> 这篇文章主要介绍了Rust在Linux下通过修改argv0和&#x2F;proc&#x2F;self&#x2F;comm的方式修改进程名以及原理.</p>
 <span id="more"></span>
 
-<h2 id="Begin"><a href="#Begin" class="headerlink" title="Begin"></a>Begin</h2><p>  最近在看tsh的相关代码，想着用rust重写一遍tsh,看到github上的rust以及go改写的tsh功能和体积都不如意，于是自己重新造轮子，过一遍完整的理论与项目实践。<br>  此文章示例代码都放在github上:<a target="_blank" rel="noopener" href="https://github.com/b1ackow1/FakeProcessNameDemo">FakeProcessNameDemo</a></p>
-<h3 id="Principle"><a href="#Principle" class="headerlink" title="Principle"></a>Principle</h3><p>  在Linux中进程名通常由修改两个地方就能伪造进程名。分别是argv[0],comm.</p>
+<hr>
+<h2 id="Begin"><a href="#Begin" class="headerlink" title="Begin"></a>Begin</h2><p>  最近在看tsh的相关代码，想着用rust重写一遍tsh,看到github上的rust以及go改写的tsh功能和体积都不如意，于是自己重新造轮子，过一遍完整的理论与项目实践。</p>
+<p>此文章示例代码都放在github上:<a target="_blank" rel="noopener" href="https://github.com/b1ackow1/FakeProcessNameDemo">FakeProcessNameDemo</a></p>
+<h2 id="Principle"><a href="#Principle" class="headerlink" title="Principle"></a>Principle</h2><p>  在Linux中进程名通常由修改两个地方就能伪造进程名。分别是argv[0],comm.</p>
 <ol>
 <li>argv[0]<br>作用:存储程序启动时的完整命令行<br>对应文件位置: &#x2F;proc&#x2F;[pid]&#x2F;cmdline<br>修改方式: 直接修改内存即可伪造进程名<br>长度: 可以很长（通常几百字节）<br>位置： 存储在进程的栈内存中</li>
 </ol>
@@ -146,17 +148,17 @@
 </ol>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> /proc/1234/comm</span><br><span class="line">nginx</span><br></pre></td></tr></table></figure>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方式1: ps -eo comm</span></span><br><span class="line">ps -eo pid,<span class="built_in">comm</span> | grep 1234</span><br><span class="line">1234 nginx</span><br><span class="line"><span class="comment">#    ^^^^^</span></span><br><span class="line"><span class="comment">#    这就是 comm</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 方式2: top</span></span><br><span class="line">top -p 1234</span><br><span class="line">  PID USER  COMMAND</span><br><span class="line"> 1234 root  nginx    ← 这里显示的也是 <span class="built_in">comm</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 方式3: htop</span></span><br><span class="line">htop -p 1234</span><br><span class="line">  PID COMMAND</span><br><span class="line"> 1234 nginx</span><br></pre></td></tr></table></figure>
-<h3 id="Coding"><a href="#Coding" class="headerlink" title="Coding"></a>Coding</h3><p>根据<a target="_blank" rel="noopener" href="https://github.com/orangetw/tsh/blob/master/tshd.c#L73">tinyshell</a>的源码，我们可以看到C语言版本是这么处理argv[0]修改进程名的</p>
+<h2 id="Coding"><a href="#Coding" class="headerlink" title="Coding"></a>Coding</h2><p>根据<a target="_blank" rel="noopener" href="https://github.com/orangetw/tsh/blob/master/tshd.c#L73">tinyshell</a>的源码，我们可以看到C语言版本是这么处理argv[0]修改进程名的</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">memset</span>((<span class="type">void</span> *)argv[<span class="number">0</span>], <span class="string">&#x27;\0&#x27;</span>, <span class="built_in">strlen</span>(argv[<span class="number">0</span>]));</span><br><span class="line"><span class="built_in">strcpy</span>(argv[<span class="number">0</span>], FAKE_PROC_NAME);</span><br></pre></td></tr></table></figure>
 <p>我们构造一个测试C语言程序</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> **argv)</span> &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;=== C语言版本 argv[0]  ===\n\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;原始 argv[0]: %s\n&quot;</span>, argv[<span class="number">0</span>]);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;原始长度: %lu 字节\n\n&quot;</span>, <span class="built_in">strlen</span>(argv[<span class="number">0</span>]));</span><br><span class="line">    <span class="type">char</span> *fake_name=<span class="string">&quot;fake&quot;</span>;</span><br><span class="line">    <span class="built_in">memset</span>(argv[<span class="number">0</span>],<span class="string">&#x27;\0&#x27;</span>,<span class="built_in">strlen</span>(argv[<span class="number">0</span>]));</span><br><span class="line">    <span class="built_in">strcpy</span>(argv[<span class="number">0</span>],fake_name);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;进程将运行15秒，请检查:\n&quot;</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;  ps aux | grep %d\n&quot;</span>, getpid());</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;  cat /proc/%d/cmdline | tr &#x27;\\0&#x27; &#x27; &#x27;\n&quot;</span>, getpid());</span><br><span class="line"></span><br><span class="line">    sleep(<span class="number">15</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// gcc -o test fake_name.c</span></span><br></pre></td></tr></table></figure>
 <p>结果如下:</p>
-<img src="/2026/01/03/linux-fake-process-name-for-rust/test_c_argv0.png" class="" title="测试结果">
+
 <p>测试OK!</p>
 <h4 id="使用rust实现进程名修改–修改Argv-0"><a href="#使用rust实现进程名修改–修改Argv-0" class="headerlink" title="使用rust实现进程名修改–修改Argv[0]"></a>使用rust实现进程名修改–修改Argv[0]</h4><p>众所周知，<code>Rust</code>是一门内存安全的语言，不使用unsafe修改argv[0]的时候，你会发现程序内读取argv[0]是修改过的进程名，使用命令<code>ps -ef</code>之类的发现进程名还是原来的进程名。</p>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut </span><span class="variable">args</span>=std::env::<span class="title function_ invoke__">args</span>().collect::&lt;<span class="type">Vec</span>&lt;_&gt;&gt;();</span><br><span class="line">    args[<span class="number">0</span>]=<span class="type">String</span>::<span class="title function_ invoke__">from</span>(<span class="string">&quot;fake-name&quot;</span>);</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;args[0]=&#123;&#125;&quot;</span>,args[<span class="number">0</span>]);</span><br><span class="line">    std::thread::<span class="title function_ invoke__">sleep</span>(std::time::Duration::<span class="title function_ invoke__">from_secs</span>(<span class="number">60</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>实际上<code>ps -ef</code>还是显示的demo进程名</p>
-<img src="/2026/01/03/linux-fake-process-name-for-rust/2026-01-03-12-42-47.png" class="">
+
 <p>原因是rust返回的args是一个拷贝，并不是引用，修改拷贝不影响原始数据。详情可以了解<a target="_blank" rel="noopener" href="https://www.duguying.net/article/can-not-modify-argv0-in-rust">没有途径修改argv[0]</a><br>我们使用unsafe来改写上述C语言代码来实现进程名字伪造.整体逻辑如下:</p>
 <pre><code>  定位当前程序栈地址-&gt;在栈中搜索argv[0]-&gt;计算可用空间-&gt;修改argv[0]
 </code></pre>
@@ -165,7 +167,7 @@
 </ol>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// 获取进程栈的地址范围</span></span><br><span class="line"><span class="comment">///</span></span><br><span class="line"><span class="comment">/// 通过读取 /proc/self/maps 查找 [stack] 区域</span></span><br><span class="line"><span class="comment">/// 返回 (stack_start, stack_end)</span></span><br><span class="line"><span class="keyword">fn</span> <span class="title function_">get_stack_range</span>()<span class="punctuation">-&gt;</span><span class="type">Result</span>&lt;(<span class="type">usize</span>,<span class="type">usize</span>),<span class="type">String</span>&gt;&#123;</span><br><span class="line">    <span class="keyword">let</span> <span class="variable">maps</span>=std::fs::<span class="title function_ invoke__">read_to_string</span>(<span class="string">&quot;/proc/self/maps&quot;</span>).<span class="title function_ invoke__">map_err</span>(|e|<span class="built_in">format!</span>(<span class="string">&quot;不能读取maps:&#123;&#125;&quot;</span>,e))?;</span><br><span class="line">    <span class="keyword">let</span> (<span class="keyword">mut</span> stack_start,<span class="keyword">mut</span> stack_end)=(<span class="number">0usize</span>,<span class="number">0usize</span>);</span><br><span class="line">    <span class="comment">//查找stack行</span></span><br><span class="line">    <span class="keyword">for</span> <span class="variable">line</span> <span class="keyword">in</span> maps.<span class="title function_ invoke__">lines</span>()&#123;</span><br><span class="line">        <span class="keyword">if</span> line.<span class="title function_ invoke__">contains</span>(<span class="string">&quot;[stack]&quot;</span>)&#123;</span><br><span class="line">            <span class="keyword">let</span> <span class="variable">parts</span>:<span class="type">Vec</span>&lt;&amp;<span class="type">str</span>&gt;=line.<span class="title function_ invoke__">split_whitespace</span>().<span class="title function_ invoke__">collect</span>();</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">let</span> <span class="variable">Some</span>(range)=parts.<span class="title function_ invoke__">first</span>()&#123;</span><br><span class="line">                <span class="keyword">let</span> <span class="variable">addrs</span>:<span class="type">Vec</span>&lt;&amp;<span class="type">str</span>&gt;=range.<span class="title function_ invoke__">split</span>(<span class="string">&quot;-&quot;</span>).<span class="title function_ invoke__">collect</span>();</span><br><span class="line">                <span class="keyword">if</span> addrs.<span class="title function_ invoke__">len</span>()==<span class="number">2</span>&#123;</span><br><span class="line">                    stack_start=<span class="type">usize</span>::<span class="title function_ invoke__">from_str_radix</span>(addrs[<span class="number">0</span>], <span class="number">16</span>).<span class="title function_ invoke__">map_err</span>(|e|<span class="built_in">format!</span>(<span class="string">&quot;解析起始地址失败:&#123;&#125;&quot;</span>,e))?;</span><br><span class="line">                    stack_end=<span class="type">usize</span>::<span class="title function_ invoke__">from_str_radix</span>(addrs[<span class="number">1</span>], <span class="number">16</span>).<span class="title function_ invoke__">map_err</span>(|e|<span class="built_in">format!</span>(<span class="string">&quot;解析结束地址失败:&#123;&#125;&quot;</span>,e))?;</span><br><span class="line">                    <span class="keyword">return</span> <span class="title function_ invoke__">Ok</span>((stack_start,stack_end));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">         &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="title function_ invoke__">Err</span>(<span class="string">&quot;未找到[stack]区域&quot;</span>.<span class="title function_ invoke__">to_string</span>())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>简单的单元测试以及结果</p>
-<img src="/2026/01/03/linux-fake-process-name-for-rust/2026-01-04-03-13-58.png" class="">
+
 <ol start="2">
 <li>在栈中搜索argv[0]字符串以及地址</li>
 </ol>
@@ -189,13 +191,13 @@
 <li>最终测试</li>
 </ol>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">unsafe</span> &#123;</span><br><span class="line">        <span class="title function_ invoke__">modify_argv0_name</span>(<span class="string">&quot;fakenamefakenamefakenamefakenamefakenamefakenamefakenamefakename&quot;</span>).<span class="title function_ invoke__">unwrap</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;  cat /proc/&#123;&#125;/cmdline | tr &#x27;\\0&#x27; &#x27; &#x27;&quot;</span>, std::process::<span class="title function_ invoke__">id</span>());</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;  ps aux | grep &#123;&#125;&quot;</span>, std::process::<span class="title function_ invoke__">id</span>());</span><br><span class="line">    std::thread::<span class="title function_ invoke__">sleep</span>(std::time::Duration::<span class="title function_ invoke__">from_secs</span>(<span class="number">60</span>));</span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
-<img src="/2026/01/03/linux-fake-process-name-for-rust/2026-01-04-04-21-38.png" class="">
+
 <p>这样就完美搞定了。</p>
-<h4 id="使用rust实现进程名修改–修改comm"><a href="#使用rust实现进程名修改–修改comm" class="headerlink" title="使用rust实现进程名修改–修改comm"></a>使用rust实现进程名修改–修改comm</h4><p>  根据先前提到的，篡改了argv[0]后，在&#x2F;proc&#x2F;self&#x2F;comm中还是能看到原始的进程名。<br>  <img src="/2026/01/03/linux-fake-process-name-for-rust/2026-01-04-04-27-39.png" class=""><br>  那么我们使用<code>prctl</code>函数直接篡改就好了。这个函数的限制就是篡改的进程名最大长度不超过<strong>16</strong>个字符(算上’\0’)</p>
+<h4 id="使用rust实现进程名修改–修改comm"><a href="#使用rust实现进程名修改–修改comm" class="headerlink" title="使用rust实现进程名修改–修改comm"></a>使用rust实现进程名修改–修改comm</h4><p>  根据先前提到的，篡改了argv[0]后，在&#x2F;proc&#x2F;self&#x2F;comm中还是能看到原始的进程名。<br>  <br>  那么我们使用<code>prctl</code>函数直接篡改就好了。这个函数的限制就是篡改的进程名最大长度不超过<strong>16</strong>个字符(算上’\0’)</p>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">  <span class="comment">//调用prctl函数修改comm</span></span><br><span class="line"><span class="keyword">unsafe</span> <span class="keyword">fn</span> <span class="title function_">mofidy_comm_name</span>(process_name:&amp;<span class="type">str</span>)<span class="punctuation">-&gt;</span><span class="type">Result</span>&lt;(), <span class="type">String</span>&gt;&#123;</span><br><span class="line">     <span class="comment">//截断长进程名到15个字符</span></span><br><span class="line">     <span class="keyword">let</span> <span class="variable">truncated_name</span>= <span class="keyword">if</span> process_name.<span class="title function_ invoke__">len</span>()&gt;<span class="number">15</span>&#123;</span><br><span class="line">        &amp;process_name[..<span class="number">15</span>]</span><br><span class="line">     &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        process_name</span><br><span class="line">     &#125;;</span><br><span class="line">     <span class="comment">//转换为C字符串</span></span><br><span class="line">     <span class="keyword">let</span> <span class="variable">c_process_name</span>=CString::<span class="title function_ invoke__">new</span>(truncated_name)</span><br><span class="line">     .<span class="title function_ invoke__">map_err</span>(|e|<span class="built_in">format!</span>(<span class="string">&quot;转换错误:&#123;&#125;&quot;</span>,e)).<span class="title function_ invoke__">unwrap</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//调用prctl</span></span><br><span class="line">    <span class="keyword">unsafe</span>&#123;</span><br><span class="line">        <span class="keyword">if</span> libc::<span class="title function_ invoke__">prctl</span>(libc::PR_SET_NAME,c_process_name.<span class="title function_ invoke__">as_ptr</span>() <span class="keyword">as</span> <span class="type">usize</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>)&lt;<span class="number">0</span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="title function_ invoke__">Err</span>(<span class="string">&quot;prctl函数调用错误&quot;</span>.<span class="title function_ invoke__">to_string</span>());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="title function_ invoke__">Ok</span>(())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">fn</span> <span class="title function_">main</span>() &#123;</span><br><span class="line">    <span class="keyword">unsafe</span> &#123;</span><br><span class="line">        <span class="title function_ invoke__">modify_argv0_name</span>(<span class="string">&quot;fakenamefakenamefakenamefakenamefakenamefakenamefakenamefakename&quot;</span>).<span class="title function_ invoke__">unwrap</span>();</span><br><span class="line">        <span class="title function_ invoke__">mofidy_comm_name</span>(<span class="string">&quot;fakenamefakenamefakenamefakenamefakenamefakenamefakenamefakename&quot;</span>).<span class="title function_ invoke__">unwrap</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;  cat /proc/&#123;&#125;/cmdline | tr &#x27;\\0&#x27; &#x27; &#x27;&quot;</span>, std::process::<span class="title function_ invoke__">id</span>());</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;  cat /proc/&#123;&#125;/comm&quot;</span>, std::process::<span class="title function_ invoke__">id</span>());</span><br><span class="line">    <span class="built_in">println!</span>(<span class="string">&quot;  ps aux | grep &#123;&#125;&quot;</span>, std::process::<span class="title function_ invoke__">id</span>());</span><br><span class="line">    std::thread::<span class="title function_ invoke__">sleep</span>(std::time::Duration::<span class="title function_ invoke__">from_secs</span>(<span class="number">60</span>));</span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
-<p>  效果<br>  <img src="/2026/01/03/linux-fake-process-name-for-rust/2026-01-04-04-40-53.png" class=""></p>
-<h2 id="Ending"><a href="#Ending" class="headerlink" title="Ending"></a>Ending</h2><p>  至此就总结了常规Linux下Rust修改进程名的两种方式。已经满足了常规Linux下的需求了，如果是freebsd以及sunos之类的，那么就需要把ptrcl函数得更换一下了。</p>
+<p>  效果<br>  </p>
+<h2 id="Ending"><a href="#Ending" class="headerlink" title="Ending"></a>Ending</h2><p>  至此就总结了常规Linux下Rust修改进程名的两种方式。<del>已经满足了常规Linux下的需求了</del>，<strong>实际上正式环境会导致程序崩溃，因为读了内存。可以使用C包装器跟tinyshell一样修改<code>argv[0]</code>的方式才是最安全的</strong> 如果是freebsd以及sunos之类的，那么就需要把ptrcl函数得更换一下了。</p>
 
 	  <div class="article-footer-copyright">
 
@@ -210,6 +212,17 @@
   	<center>
 
 	<div class="pagination">
+
+    
+    
+    <a href="/2026/03/08/rundeck-backdoor-for-java/" type="button" class="btn btn-default"><i
+                class="fa fa-arrow-circle-o-left"></i> Prev</a>
+    
+
+    <a href="/" type="button" class="btn btn-default"><i class="fa fa-home"></i>Home</a>
+    
+    <a type="button" class="btn btn-default disabled">Next<i class="fa fa-arrow-circle-o-right"></i></a>
+    
 
     
 </div>
@@ -267,7 +280,7 @@ var gitalk = new Gitalk(gitalkConfig)
     <ul id="categorys" class="tag_box list-unstyled collapse in">
           
   <li>
-    <li><a href="/categories/Programming/">Programming<span>1</span></a></li>
+    <li><a href="/categories/Programming/">Programming<span>2</span></a></li>
   </li>
 
     </ul>
@@ -292,7 +305,7 @@ var gitalk = new Gitalk(gitalkConfig)
 	<div class="meta-widget">
 	   <div id="toc" class="toc">
 		   <span class="toc-title"><i class="fa fa-list"></i> Contents</span>
-			<ol class="toc-article"><li class="toc-article-item toc-article-level-2"><a class="toc-article-link" href="#Begin"><span class="toc-article-text">Begin</span></a><ol class="toc-article-child"><li class="toc-article-item toc-article-level-3"><a class="toc-article-link" href="#Principle"><span class="toc-article-text">Principle</span></a></li><li class="toc-article-item toc-article-level-3"><a class="toc-article-link" href="#Coding"><span class="toc-article-text">Coding</span></a><ol class="toc-article-child"><li class="toc-article-item toc-article-level-4"><a class="toc-article-link" href="#%E4%BD%BF%E7%94%A8rust%E5%AE%9E%E7%8E%B0%E8%BF%9B%E7%A8%8B%E5%90%8D%E4%BF%AE%E6%94%B9%E2%80%93%E4%BF%AE%E6%94%B9Argv-0"><span class="toc-article-text">使用rust实现进程名修改–修改Argv[0]</span></a></li><li class="toc-article-item toc-article-level-4"><a class="toc-article-link" href="#%E4%BD%BF%E7%94%A8rust%E5%AE%9E%E7%8E%B0%E8%BF%9B%E7%A8%8B%E5%90%8D%E4%BF%AE%E6%94%B9%E2%80%93%E4%BF%AE%E6%94%B9comm"><span class="toc-article-text">使用rust实现进程名修改–修改comm</span></a></li></ol></li></ol></li><li class="toc-article-item toc-article-level-2"><a class="toc-article-link" href="#Ending"><span class="toc-article-text">Ending</span></a></li></ol>
+			<ol class="toc-article"><li class="toc-article-item toc-article-level-2"><a class="toc-article-link" href="#Begin"><span class="toc-article-text">Begin</span></a></li><li class="toc-article-item toc-article-level-2"><a class="toc-article-link" href="#Principle"><span class="toc-article-text">Principle</span></a></li><li class="toc-article-item toc-article-level-2"><a class="toc-article-link" href="#Coding"><span class="toc-article-text">Coding</span></a><ol class="toc-article-child"><li class="toc-article-item toc-article-level-4"><a class="toc-article-link" href="#%E4%BD%BF%E7%94%A8rust%E5%AE%9E%E7%8E%B0%E8%BF%9B%E7%A8%8B%E5%90%8D%E4%BF%AE%E6%94%B9%E2%80%93%E4%BF%AE%E6%94%B9Argv-0"><span class="toc-article-text">使用rust实现进程名修改–修改Argv[0]</span></a></li><li class="toc-article-item toc-article-level-4"><a class="toc-article-link" href="#%E4%BD%BF%E7%94%A8rust%E5%AE%9E%E7%8E%B0%E8%BF%9B%E7%A8%8B%E5%90%8D%E4%BF%AE%E6%94%B9%E2%80%93%E4%BF%AE%E6%94%B9comm"><span class="toc-article-text">使用rust实现进程名修改–修改comm</span></a></li></ol></li><li class="toc-article-item toc-article-level-2"><a class="toc-article-link" href="#Ending"><span class="toc-article-text">Ending</span></a></li></ol>
 		</div>
 	</div>
 	
@@ -328,7 +341,7 @@ var gitalk = new Gitalk(gitalkConfig)
 
 
   
-<a id="gotop" href="#">   
+<a id="gotop" href="#">
   <span>⬆︎TOP</span>
 </a>
 
@@ -336,7 +349,76 @@ var gitalk = new Gitalk(gitalkConfig)
 <script src="/js/gallery.js"></script>
 <script src="/js/bootstrap.min.js"></script>
 <script src="/js/main.js"></script>
-<script src="/js/search.js"></script> 
+<script src="/js/search.js"></script>
+
+<script>
+(function() {
+  var langColors = {
+    rust:       '#f0883e',
+    java:       '#4e9eda',
+    python:     '#dcdcaa',
+    javascript: '#f7df1e',
+    js:         '#f7df1e',
+    typescript: '#3178c6',
+    ts:         '#3178c6',
+    c:          '#4fc1ff',
+    cpp:        '#4fc1ff',
+    go:         '#79d4fd',
+    bash:       '#6db33f',
+    sh:         '#6db33f',
+    shell:      '#6db33f',
+    html:       '#e34c26',
+    css:        '#563d7c',
+    sql:        '#e38c00',
+    plaintext:  '#6e7681',
+  };
+  document.querySelectorAll('figure.highlight').forEach(function(fig) {
+    var lang = Array.from(fig.classList).find(function(c) { return c !== 'highlight'; });
+    var label = document.createElement('div');
+    label.textContent = lang === 'plaintext' ? 'text' : lang;
+    var color = langColors[lang] || '#79c0ff';
+    label.style.cssText = 'padding:3px 12px;font-size:11px;color:' + color + ';background:#161b22;border-bottom:1px solid #30363d;border-radius:6px 6px 0 0;text-align:right;font-family:monospace;user-select:none;-webkit-user-select:none;';
+    fig.insertBefore(label, fig.firstChild);
+  });
+})();
+</script>
+
+<script>
+// 代码块自动折叠
+(function() {
+  var THRESHOLD = 15; // 超过此行数自动折叠
+  document.querySelectorAll('figure.highlight').forEach(function(fig) {
+    var lines = fig.querySelectorAll('.gutter .line').length;
+    if (lines <= THRESHOLD) return;
+
+    fig.classList.add('code-collapsed');
+
+    var btn = document.createElement('button');
+    btn.className = 'code-toggle-btn';
+    btn.textContent = '▼ 展开代码（共 ' + lines + ' 行）';
+    fig.parentNode.insertBefore(btn, fig.nextSibling);
+
+    btn.addEventListener('click', function() {
+      var collapsed = fig.classList.toggle('code-collapsed');
+      btn.textContent = collapsed
+        ? '▼ 展开代码（共 ' + lines + ' 行）'
+        : '▲ 收起代码';
+    });
+  });
+})();
+</script>
+
+<script>
+// 诊断：输出 strong 元素的实际计算样式
+var s = document.querySelector('strong');
+if (s) {
+  var cs = window.getComputedStyle(s);
+  console.log('[bold-debug] fontFamily:', cs.fontFamily);
+  console.log('[bold-debug] textTransform:', cs.textTransform);
+  console.log('[bold-debug] fontVariant:', cs.fontVariant);
+  console.log('[bold-debug] fontVariantCaps:', cs.fontVariantCaps);
+}
+</script>
 
 
 <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">

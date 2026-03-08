@@ -142,6 +142,70 @@ figure.highlight {
     margin: 1em 0 !important;
 }
 
+/* 无指定语言的 ``` 代码块样式美化 */
+figure.highlight.plaintext {
+    box-shadow: -4px 0 0 #555 !important;
+}
+
+/* bash 基础文字色：终端绿，弥补高亮 token 少的问题 */
+figure.highlight.bash .code pre,
+figure.highlight.sh .code pre,
+figure.highlight.shell .code pre {
+    color: #b5cea8 !important;
+}
+
+figure.highlight.plaintext::before {
+    content: 'text';
+    display: block;
+    padding: 4px 16px;
+    font-size: 11px;
+    color: #8b949e;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    border-radius: 6px 6px 0 0;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    text-align: right;
+}
+
+/* 代码块折叠功能 */
+figure.highlight.code-collapsed {
+    max-height: 320px !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+figure.highlight.code-collapsed::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(transparent 0%, #0d1117 70%);
+    pointer-events: none;
+}
+
+.code-toggle-btn {
+    display: block;
+    width: 100%;
+    padding: 6px 0;
+    background: #161b22;
+    border: none;
+    border-top: 1px solid #30363d;
+    color: #8b949e;
+    font-size: 12px;
+    font-family: monospace;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    transition: color 0.2s, background 0.2s;
+}
+
+.code-toggle-btn:hover {
+    color: #79c0ff;
+    background: #1c2128;
+}
+
 .highlight pre {
     background: transparent !important;
     border: none !important;
@@ -730,8 +794,12 @@ a:has(.site-logo):hover {
 /* Markdown text formatting - 优化行内元素显示 */
 /* Bold text - 加粗文本 */
 strong, b {
-    color: #e6edf3 !important;  /* 比正文更亮的白色，突出显示 */
-    font-weight: 600 !important;  /* 使用稍重的字重 */
+    color: #e6edf3 !important;
+    font-weight: 700 !important;
+    font-family: 'Liberation Mono', 'DejaVu Sans Mono', 'Courier New', Courier, monospace !important;
+    text-transform: none !important;
+    font-variant: normal !important;
+    font-variant-caps: normal !important;
 }
 
 /* Italic text - 斜体文本 */

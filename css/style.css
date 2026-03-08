@@ -45,7 +45,7 @@ body {
 .page,
 .post {
     line-height: 1.5em;
-    font-family: Fira code,SimHei,Monaco, Menlo, Consolas,DOS,  'Courier New', monospace
+    font-family: 'Fira Code', SimHei, Monaco, Menlo, Consolas, 'Courier New', monospace
 }
 
 .page .more {
@@ -209,7 +209,7 @@ a.label-anchor {
     text-align: right;
     width: 200px;
     left: -210px;
-    font-family: DOS, SimHei, Monaco, Menlo, Consolas, 'Courier New', monospace
+    font-family: SimHei, Monaco, Menlo, Consolas, 'Courier New', monospace
 }
 
 a.label-anchor:target span {
@@ -254,7 +254,7 @@ blockquote ol,
 blockquote ul,
 blockquote li,
 .slogan {
-    font-family: DOS, SimHei, Monaco, Menlo, Consolas, 'Courier New', monospace
+    font-family: SimHei, Monaco, Menlo, Consolas, 'Courier New', monospace
 }
 
 img,
@@ -375,14 +375,14 @@ h6 {
     text-rendering: optimizelegibility;
     font-weight: bold;
     line-height: 1.2em;
-    font-family: DOS, SimHei, Monaco, Menlo, Consolas, 'Courier New', monospace;
+    font-family: SimHei, Monaco, Menlo, Consolas, 'Courier New', monospace;
     color: #fff
 }
 
 h2 {
     color: #fff;
-    padding-top: 40px;
-    margin: -25px 0 .83em
+    padding-top: 16px;
+    margin: -8px 0 .5em
 }
 
 .page-header {
@@ -422,7 +422,7 @@ em{
     font-size: 1.5em;
     line-height: 1.3em;
     font-weight: bold;
-    font-family: DOS, SimHei, Monaco, Menlo, Consolas, 'Courier New', monospace
+    font-family: SimHei, Monaco, Menlo, Consolas, 'Courier New', monospace
 }
 
 .page h3.title div.article-title {
@@ -587,7 +587,7 @@ figure {
 
 pre,
 code {
-    font-family: Fira Code,Monaco, Menlo, Consolas,DOS,  "Courier New", monospace !important
+    font-family: 'Fira Code', Monaco, Menlo, Consolas, 'Courier New', monospace !important
 }
 
 .fancybox-close:hover {
