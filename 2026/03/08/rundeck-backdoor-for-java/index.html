@@ -232,6 +232,7 @@
 <p>验证插件运行正常</p>
 <img src="/2026/03/08/rundeck-backdoor-for-java/2026-03-08-16-38-18.png" class="">
 <h2 id="Ending"><a href="#Ending" class="headerlink" title="Ending"></a>Ending</h2><p>整个后门植入链路：<strong>Rundeck 插件</strong> → <strong>Java Agent 注入 JVM</strong> → <strong>动态注册 Servlet</strong> → <strong>无需登录访问 WebShell &#x2F; 代理</strong>，在拥有 Rundeck 管理员权限的场景下完整走通，三项功能（RCE WebShell、哥斯拉、suo5 代理）均验证正常。</p>
+<p>再而把<strong>Java Agent</strong>转换成适用于<code>rundeck</code>的插件jar包，即可搞定了。</p>
 <p>需要注意的是，<code>/static/</code> 路由是 Rundeck 的静态资源路径，注入后的 Servlet 挂在该路径下不会触发 SpringSecurity 认证拦截，天然绕过了登录校验。整个过程的关键难点在于理解 Grails + Jetty 的 <code>ServletContext</code> 获取链路，与常规 Tomcat 场景有所不同，需要通过 <code>Holders.getGrailsApplication()</code> 一路向下拿到 <code>ContextHandler</code>。</p>
 
 	  <div class="article-footer-copyright">
