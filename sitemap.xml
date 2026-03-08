@@ -2,16 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://b1ackow1.github.io/2026/03/08/rundeck-backdoor-for-java/</loc>
-    
-    <lastmod>2026-03-08</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://b1ackow1.github.io/tags/index.html</loc>
+    <loc>https://b1ackow1.github.io/about/index.html</loc>
     
     <lastmod>2026-03-08</lastmod>
     
@@ -29,7 +20,16 @@
   </url>
   
   <url>
-    <loc>https://b1ackow1.github.io/about/index.html</loc>
+    <loc>https://b1ackow1.github.io/tags/index.html</loc>
+    
+    <lastmod>2026-03-08</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://b1ackow1.github.io/2026/03/08/rundeck-backdoor-for-java/</loc>
     
     <lastmod>2026-03-08</lastmod>
     
