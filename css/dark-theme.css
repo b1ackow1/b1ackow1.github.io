@@ -381,7 +381,11 @@ footer {
     position: relative;
 }
 
-#site_search::before {
+#site_search .form-group {
+    position: relative;
+}
+
+#site_search .form-group::before {
     content: '\f002';
     font-family: 'FontAwesome';
     position: absolute;
