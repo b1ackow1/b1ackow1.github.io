@@ -427,7 +427,9 @@ footer {
     border: 1px solid #30363d;
     border-radius: 6px;
     margin-top: 6px;
-    overflow: hidden;
+    max-height: 3in;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 ul.search-result-list {
