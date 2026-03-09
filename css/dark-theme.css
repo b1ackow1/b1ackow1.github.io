@@ -377,15 +377,100 @@ footer {
 }
 
 /* Search */
+#site_search {
+    position: relative;
+}
+
+#site_search::before {
+    content: '\f002';
+    font-family: 'FontAwesome';
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #484f58;
+    font-size: 13px;
+    pointer-events: none;
+    z-index: 1;
+}
+
 #local-search-input {
-    background-color: #0d1117;
+    background-color: #161b22;
     color: #c9d1d9;
     border: 1px solid #30363d;
+    border-radius: 6px !important;
+    padding-left: 32px !important;
+    font-size: 13px;
+    height: 34px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: 'Fira Code', monospace;
+}
+
+#local-search-input::placeholder {
+    color: #484f58;
+}
+
+#local-search-input:focus {
+    background-color: #0d1117;
+    border-color: #388bfd !important;
+    box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.15) !important;
+    outline: none;
+    color: #e6edf3;
 }
 
 #local-search-result {
-    background-color: #0d1117;
+    background-color: #161b22;
     border: 1px solid #30363d;
+    border-radius: 6px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+ul.search-result-list {
+    padding: 4px 0;
+    margin: 0;
+    list-style: none;
+}
+
+ul.search-result-list li {
+    padding: 8px 12px;
+    border-bottom: 1px solid #21262d;
+    transition: background 0.15s;
+}
+
+ul.search-result-list li:last-child {
+    border-bottom: none;
+}
+
+ul.search-result-list li:hover {
+    background-color: #1c2128;
+}
+
+a.search-result-title {
+    font-weight: 600;
+    color: #58a6ff !important;
+    font-size: 13px;
+    text-decoration: none !important;
+    display: block;
+    margin-bottom: 2px;
+}
+
+a.search-result-title:hover {
+    color: #79c0ff !important;
+}
+
+p.search-result {
+    color: #8b949e;
+    font-size: 12px;
+    margin: 0;
+    line-height: 1.5;
+}
+
+em.search-keyword {
+    color: #f0883e;
+    font-style: normal;
+    font-weight: 600;
+    border-bottom: none;
 }
 
 /* Buttons */
