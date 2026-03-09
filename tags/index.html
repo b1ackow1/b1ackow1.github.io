@@ -40,17 +40,6 @@
 
   <!-- analytics -->
   
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-70812759-1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'UA-70812759-1');
-</script>
-
-
 
 
 
@@ -353,17 +342,17 @@
 		<h4>Tag Cloud</h4>
 		<ul class="tag_box inline list-unstyled">		
 		
-			<li><a href="/tags/Backdoor/">Backdoor<span>1</span></a></li>
-		
-			<li><a href="/tags/argv0/">argv0<span>1</span></a></li>
-		
-			<li><a href="/tags/tinyshell/">tinyshell<span>1</span></a></li>
-		
 			<li><a href="/tags/Linux/">Linux<span>1</span></a></li>
 		
 			<li><a href="/tags/Rundeck/">Rundeck<span>1</span></a></li>
 		
+			<li><a href="/tags/Backdoor/">Backdoor<span>1</span></a></li>
+		
+			<li><a href="/tags/tinyshell/">tinyshell<span>1</span></a></li>
+		
 			<li><a href="/tags/Java/">Java<span>1</span></a></li>
+		
+			<li><a href="/tags/argv0/">argv0<span>1</span></a></li>
 		
 		 
 		</ul>
@@ -489,25 +478,30 @@
 </script>
 
 <script>
-// 代码块复制按钮
+// 代码块复制按钮（插入语言标签栏内）
 (function() {
   document.querySelectorAll('figure.highlight').forEach(function(fig) {
+    var label = fig.firstChild;
+    if (!label || label.nodeType !== 1) return;
+    label.style.display = 'flex';
+    label.style.justifyContent = 'space-between';
+    label.style.alignItems = 'center';
+
     var btn = document.createElement('button');
     btn.textContent = 'copy';
-    btn.style.cssText = 'position:absolute;top:4px;right:8px;padding:2px 8px;font-size:11px;font-family:monospace;background:#21262d;color:#8b949e;border:1px solid #30363d;border-radius:4px;cursor:pointer;z-index:10;transition:color 0.2s,background 0.2s;';
-    btn.addEventListener('mouseenter', function() { this.style.color='#79c0ff'; this.style.background='#1c2128'; });
-    btn.addEventListener('mouseleave', function() { this.style.color='#8b949e'; this.style.background='#21262d'; });
+    btn.style.cssText = 'padding:1px 8px;font-size:11px;font-family:monospace;background:transparent;color:#8b949e;border:1px solid #30363d;border-radius:4px;cursor:pointer;transition:color 0.2s;';
+    btn.addEventListener('mouseenter', function() { this.style.color='#79c0ff'; });
+    btn.addEventListener('mouseleave', function() { this.style.color='#8b949e'; });
     btn.addEventListener('click', function() {
-      var code = fig.querySelectorAll('.code .line');
-      var text = Array.from(code).map(function(l) { return l.innerText; }).join('\n');
+      var lines = fig.querySelectorAll('.code .line');
+      var text = Array.from(lines).map(function(l) { return l.innerText; }).join('\n');
       navigator.clipboard.writeText(text).then(function() {
         btn.textContent = 'copied!';
         btn.style.color = '#3fb950';
         setTimeout(function() { btn.textContent = 'copy'; btn.style.color = '#8b949e'; }, 1500);
       });
     });
-    fig.style.position = 'relative';
-    fig.appendChild(btn);
+    label.insertBefore(btn, label.firstChild);
   });
 })();
 </script>
@@ -515,18 +509,19 @@
 <script>
 // 阅读时长估算
 (function() {
-  var article = document.querySelector('.post .entry-content') || document.querySelector('.post .content') || document.querySelector('article .content');
-  if (!article) return;
-  var text = article.innerText || '';
+  var content = document.querySelector('.mypage');
+  if (!content) return;
+  var text = content.innerText || '';
   var cn = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
   var en = (text.match(/[a-zA-Z]+/g) || []).length;
   var minutes = Math.ceil(cn / 350 + en / 200);
-  var meta = document.querySelector('.post-time') || document.querySelector('.post-date');
-  if (!meta) return;
+  var clock = document.querySelector('.fa-clock-o');
+  if (!clock) return;
+  var metaDiv = clock.parentElement;
   var span = document.createElement('span');
-  span.style.cssText = 'margin-left:12px;color:#8b949e;font-size:0.85em;';
+  span.style.cssText = 'margin-left:6px;color:#8b949e;font-size:0.9em;';
   span.textContent = '· 约 ' + minutes + ' 分钟';
-  meta.parentNode.insertBefore(span, meta.nextSibling);
+  metaDiv.appendChild(span);
 })();
 </script>
 
