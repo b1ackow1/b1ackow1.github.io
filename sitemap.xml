@@ -20,15 +20,6 @@
   </url>
   
   <url>
-    <loc>https://b1ackow1.github.io/categories/index.html</loc>
-    
-    <lastmod>2026-03-09</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://b1ackow1.github.io/2026/03/08/rundeck-backdoor-for-java/</loc>
     
     <lastmod>2026-03-08</lastmod>
@@ -56,27 +47,6 @@
 
   
   <url>
-    <loc>https://b1ackow1.github.io/tags/Linux/</loc>
-    <lastmod>2026-03-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://b1ackow1.github.io/tags/argv0/</loc>
-    <lastmod>2026-03-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://b1ackow1.github.io/tags/tinyshell/</loc>
-    <lastmod>2026-03-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://b1ackow1.github.io/tags/Rundeck/</loc>
     <lastmod>2026-03-09</lastmod>
     <changefreq>weekly</changefreq>
@@ -92,6 +62,27 @@
   
   <url>
     <loc>https://b1ackow1.github.io/tags/Backdoor/</loc>
+    <lastmod>2026-03-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://b1ackow1.github.io/tags/Linux/</loc>
+    <lastmod>2026-03-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://b1ackow1.github.io/tags/argv0/</loc>
+    <lastmod>2026-03-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://b1ackow1.github.io/tags/tinyshell/</loc>
     <lastmod>2026-03-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
