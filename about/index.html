@@ -153,7 +153,7 @@
 <li>📝 技术写作 &#x2F; Technical Writing</li></li>
 </ul>
 <h3 id="Get-in-Touch"><a href="#Get-in-Touch" class="headerlink" title="Get in Touch"></a>Get in Touch</h3><p>Feel free to reach out if you want to discuss technology, collaborate on projects, or just say hello!</p>
-<h3 id="Contact-Me"><a href="#Contact-Me" class="headerlink" title="Contact Me"></a>Contact Me</h3><p>Email: <a href="mailto:&#x62;&#x31;&#97;&#99;&#107;&#x6f;&#119;&#x31;&#x40;&#112;&#109;&#46;&#109;&#x65;">b1ackow1@pm.me</a></p>
+<h3 id="Contact-Me"><a href="#Contact-Me" class="headerlink" title="Contact Me"></a>Contact Me</h3><p>Email: <a href="mailto:&#x62;&#x31;&#x61;&#x63;&#107;&#111;&#x77;&#x31;&#x40;&#x70;&#109;&#46;&#109;&#x65;">b1ackow1@pm.me</a></p>
 
 	  <div class="article-footer-copyright">
 
@@ -292,15 +292,45 @@ var gitalk = new Gitalk(gitalkConfig)
 </script>
 
 <script>
-// 诊断：输出 strong 元素的实际计算样式
-var s = document.querySelector('strong');
-if (s) {
-  var cs = window.getComputedStyle(s);
-  console.log('[bold-debug] fontFamily:', cs.fontFamily);
-  console.log('[bold-debug] textTransform:', cs.textTransform);
-  console.log('[bold-debug] fontVariant:', cs.fontVariant);
-  console.log('[bold-debug] fontVariantCaps:', cs.fontVariantCaps);
-}
+// 代码块复制按钮
+(function() {
+  document.querySelectorAll('figure.highlight').forEach(function(fig) {
+    var btn = document.createElement('button');
+    btn.textContent = 'copy';
+    btn.style.cssText = 'position:absolute;top:4px;right:8px;padding:2px 8px;font-size:11px;font-family:monospace;background:#21262d;color:#8b949e;border:1px solid #30363d;border-radius:4px;cursor:pointer;z-index:10;transition:color 0.2s,background 0.2s;';
+    btn.addEventListener('mouseenter', function() { this.style.color='#79c0ff'; this.style.background='#1c2128'; });
+    btn.addEventListener('mouseleave', function() { this.style.color='#8b949e'; this.style.background='#21262d'; });
+    btn.addEventListener('click', function() {
+      var code = fig.querySelectorAll('.code .line');
+      var text = Array.from(code).map(function(l) { return l.innerText; }).join('\n');
+      navigator.clipboard.writeText(text).then(function() {
+        btn.textContent = 'copied!';
+        btn.style.color = '#3fb950';
+        setTimeout(function() { btn.textContent = 'copy'; btn.style.color = '#8b949e'; }, 1500);
+      });
+    });
+    fig.style.position = 'relative';
+    fig.appendChild(btn);
+  });
+})();
+</script>
+
+<script>
+// 阅读时长估算
+(function() {
+  var article = document.querySelector('.post .entry-content') || document.querySelector('.post .content') || document.querySelector('article .content');
+  if (!article) return;
+  var text = article.innerText || '';
+  var cn = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
+  var en = (text.match(/[a-zA-Z]+/g) || []).length;
+  var minutes = Math.ceil(cn / 350 + en / 200);
+  var meta = document.querySelector('.post-time') || document.querySelector('.post-date');
+  if (!meta) return;
+  var span = document.createElement('span');
+  span.style.cssText = 'margin-left:12px;color:#8b949e;font-size:0.85em;';
+  span.textContent = '· 约 ' + minutes + ' 分钟';
+  meta.parentNode.insertBefore(span, meta.nextSibling);
+})();
 </script>
 
 
@@ -308,7 +338,14 @@ if (s) {
 <script src="/fancybox/jquery.fancybox.pack.js"></script>
 <script type="text/javascript">
 (function($){
-  $('.fancybox').fancybox();
+  // 自动给文章内图片加 fancybox
+  $('.post img:not(.nofancybox), .page img:not(.nofancybox)').each(function() {
+    var src = $(this).attr('src');
+    if (src && !$(this).parent().is('a')) {
+      $(this).wrap('<a class="fancybox" href="' + src + '" rel="gallery"></a>');
+    }
+  });
+  $('.fancybox').fancybox({ openEffect: 'fade', closeEffect: 'fade' });
 })(jQuery);
 </script>
 
